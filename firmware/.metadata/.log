@@ -1,0 +1,18 @@
+!SESSION 2026-09-19 19:20:21.538 -----------------------------------------------
+eclipse.buildId=Version 2.1.1
+java.version=21.0.9
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=fr_FR
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2026-09-19 19:21:15.666
+!MESSAGE Log4j2 initialized with config file /home/mm/Documents/embedded/projects/industrial-condition-monitoring/firmware/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2026-09-19 19:21:18.941
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-09-19 19:24:04.259
+!MESSAGE Indexed 'condition-monitor-node' (3 sources, 53 headers) in 1,17 sec: 1 954 declarations; 2 864 references; 0 unresolved inclusions; 2 syntax errors; 2 unresolved names (0,041 %)
+
+!ENTRY org.eclipse.cdt.core 1 0 2026-09-19 19:57:37.834
+!MESSAGE Indexed 'condition-monitor-node' (20 sources, 117 headers) in 3,17 sec: 11 016 declarations; 42 698 references; 1 unresolved inclusions; 92 syntax errors; 240 unresolved names (0,44 %)
