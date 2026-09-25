@@ -91,6 +91,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  uint32_t last_toggle = HAL_GetTick();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -101,8 +103,11 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-	  HAL_Delay(500);
+	  if (HAL_GetTick() - last_toggle >= 500)
+	  {
+	      HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+	      last_toggle = HAL_GetTick();
+	  }
 
   }
   /* USER CODE END 3 */
