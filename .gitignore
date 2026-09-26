@@ -8,5 +8,8 @@
 Debug/
 Release/
 
+# STM32CubeMX generated state
+.mxproject
+
 # IDE logs
 *.log
