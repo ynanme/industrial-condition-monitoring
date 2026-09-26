@@ -25,3 +25,11 @@
 - Learned how the Cortex-M SysTick timer generates a 1 ms HAL time base.
 - Introduced interrupt handling, ISR execution and NVIC interrupt priorities.
 - Understood why blocking delays are unsuitable for precise periodic acquisition.
+
+## Session 4 — Non-blocking software timing
+
+- Replaced `HAL_Delay()` with non-blocking timing based on `HAL_GetTick()`.
+- Used an elapsed-time check to toggle LD2 every 500 ms while keeping the main loop available.
+- Understood the role of `last_toggle` as a timestamp of the previous event.
+- Learned why `HAL_GetTick() - last_toggle >= period` remains safe across unsigned tick overflow.
+- Compared blocking delays with polling-based periodic execution.
