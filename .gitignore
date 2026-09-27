@@ -13,3 +13,6 @@ Release/
 
 # IDE logs
 *.log
+
+# docs
+docs/roadmap.md

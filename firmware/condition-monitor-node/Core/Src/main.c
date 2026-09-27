@@ -95,6 +95,17 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
+  char message[] = "Hello from STM32!\r\n";
+
+  HAL_UART_Transmit(
+      &huart2,
+      (uint8_t *)message,
+      sizeof(message) - 1,
+      HAL_MAX_DELAY
+  );
+
+  uint8_t rx_byte;
+
   HAL_TIM_Base_Start_IT(&htim2);
 
   /* USER CODE END 2 */
@@ -106,6 +117,10 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
+
+	  HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
 
   }
   /* USER CODE END 3 */

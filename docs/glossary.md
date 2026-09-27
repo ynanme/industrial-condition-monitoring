@@ -2,6 +2,7 @@
 
 | Acronym / term | Meaning | Context |
 |---|---|---|
+| AF | Alternate Function | Connects a GPIO pin to a peripheral such as USART instead of using it as ordinary GPIO |
 | AHB | Advanced High-performance Bus | High-speed internal bus in the STM32 clock/bus architecture |
 | APB | Advanced Peripheral Bus | Bus connecting many STM32 peripherals; TIM2 is on APB1 |
 | ARR | Auto-Reload Register | Timer value defining when the counter resets and generates an update event |
@@ -15,6 +16,7 @@
 | ISR | Interrupt Service Routine | Function executed in response to an interrupt |
 | MCU | Microcontroller Unit | The microcontroller chip itself; here STM32F401RET6 |
 | MODER | Mode Register | GPIO register selecting Input, Output, Alternate Function or Analog mode |
+| MSP | MCU Support Package | HAL layer containing low-level peripheral hardware initialization |
 | NVIC | Nested Vectored Interrupt Controller | Cortex-M hardware block managing interrupts and priorities |
 | ODR | Output Data Register | GPIO register representing output states |
 | OSPEEDR | Output Speed Register | GPIO register controlling output switching speed |
@@ -22,4 +24,9 @@
 | PSC | Prescaler | Timer divider used to reduce the timer input clock |
 | PUPDR | Pull-Up/Pull-Down Register | GPIO register controlling internal pull resistors |
 | RCC | Reset and Clock Control | STM32 block responsible for peripheral clocks and resets |
+| RX | Receive | Serial data reception |
 | SysTick | System Tick | Cortex-M timer used by the HAL as its default 1 ms time base |
+| TX | Transmit | Serial data transmission |
+| UART | Universal Asynchronous Receiver/Transmitter | Asynchronous serial communication peripheral/protocol |
+| USART | Universal Synchronous/Asynchronous Receiver/Transmitter | Peripheral supporting asynchronous UART and synchronous communication |
+| VCP | Virtual COM Port | USB interface exposing the board's serial communication as a host serial port |

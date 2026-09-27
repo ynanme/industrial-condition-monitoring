@@ -43,3 +43,16 @@
 - Used the HAL timer callback to toggle LD2 independently from the main loop.
 - Introduced interrupt latency, jitter and the distinction between periodic hardware events and real-time guarantees.
 - See [Timer basics](timer-basics.md) for the timer configuration and calculation.
+
+## Session 6 — Interrupt flow and UART communication
+
+- Traced the complete TIM2 interrupt path from the hardware update event to application code.
+- Studied the TIM2 update flag, interrupt enable and NVIC handling.
+- Located `TIM2_IRQHandler()` in the Cortex-M interrupt vector table.
+- Understood how weak handlers and HAL callbacks allow application-specific interrupt handling.
+- Configured USART2 in asynchronous 115200 8N1 mode.
+- Used PA2 and PA3 through their USART2 alternate functions.
+- Sent serial data from the STM32 to a Linux host through the onboard ST-LINK virtual serial port.
+- Implemented a blocking UART echo between the PC and STM32.
+- Observed that TIM2 interrupts continue executing while the main flow waits for UART input.
+- See [Interrupt flow](interrupt-flow.md) and [UART basics](uart-basics.md).
