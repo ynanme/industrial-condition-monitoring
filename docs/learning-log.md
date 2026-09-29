@@ -56,3 +56,15 @@
 - Implemented a blocking UART echo between the PC and STM32.
 - Observed that TIM2 interrupts continue executing while the main flow waits for UART input.
 - See [Interrupt flow](interrupt-flow.md) and [UART basics](uart-basics.md).
+
+## Session 7 — V1 sensor strategy
+
+- Defined rotating machinery as the initial condition-monitoring use case.
+- Selected vibration as the first physical quantity to monitor.
+- Chose a 3-axis digital accelerometer as the first sensor type.
+- Introduced I²C and SPI and compared their trade-offs for sensor acquisition.
+- Introduced sampling frequency, Nyquist frequency and aliasing.
+- Set an initial target of roughly 0–500 Hz useful vibration bandwidth with a 2 kHz sampling rate.
+- Compared LIS3DH, ADXL355 and IIS3DWB as candidate accelerometers.
+- Selected the ADXL355 as the current leading candidate for V1, with SPI as the preferred interface.
+- See [Sampling basics](sampling-basics.md) for sampling frequency, Nyquist and aliasing.
