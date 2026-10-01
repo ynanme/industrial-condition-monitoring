@@ -68,3 +68,17 @@
 - Compared LIS3DH, ADXL355 and IIS3DWB as candidate accelerometers.
 - Selected the ADXL355 as the current leading candidate for V1, with SPI as the preferred interface.
 - See [Sampling basics](sampling-basics.md) for sampling frequency, Nyquist and aliasing.
+
+## Session 8 — ADXL355 and SPI preparation
+
+- Clarified the physical monitoring setup: the accelerometer is mechanically fixed to the rotating machine and measures its vibration.
+- Studied the ADXL355 SPI interface and the role of SCK, MOSI, MISO and CS.
+- Introduced SPI Mode 0 (`CPOL = 0`, `CPHA = 0`) and software-controlled chip select.
+- Configured SPI2 on the STM32F401RE:
+  - PB10: SCK
+  - PC2: MISO
+  - PC3: MOSI
+  - PB12: ADXL355 chip select
+- Set the SPI prescaler to 8, giving an SCK frequency of approximately 5.25 MHz.
+- Configured the ADXL355 CS pin to remain HIGH when idle.
+- Prepared the firmware for the first ADXL355 register read.
