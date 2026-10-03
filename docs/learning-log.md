@@ -82,3 +82,23 @@
 - Set the SPI prescaler to 8, giving an SCK frequency of approximately 5.25 MHz.
 - Configured the ADXL355 CS pin to remain HIGH when idle.
 - Prepared the firmware for the first ADXL355 register read.
+
+## Session 9 — First ADXL355 driver function
+
+- Clarified the STM32 hardware-peripheral model:
+  - TIM2, USART2 and SPI2 are dedicated hardware peripherals.
+  - GPIO ports are also hardware peripherals, but directly control physical pins.
+  - PA5, PB12, PB10, PC2 and PC3 are physical MCU pins.
+  - Alternate Functions connect pins to internal peripherals such as SPI2.
+- Clarified the role of STM32 HAL handles such as `htim2`, `huart2` and `hspi2`.
+- Created the first ADXL355 driver files:
+  - `Core/Inc/adxl355.h`
+  - `Core/Src/adxl355.c`
+- Added the ADXL355 `PARTID` register constants.
+- Implemented the first generic register-read function using:
+  - software-controlled chip select;
+  - `HAL_SPI_TransmitReceive`;
+  - a command byte containing the register address and READ bit;
+  - a dummy byte to clock the returned data.
+- Verified the firmware still builds successfully with 0 errors and 0 warnings.
+- See [STM32 MCU peripherals](mcu-peripherals.md) for the MCU peripheral and pin model.
