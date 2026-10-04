@@ -7,7 +7,15 @@
 #define ADXL355_PARTID_VALUE 0xED
 
 
-uint8_t ADXL355_ReadRegister(SPI_HandleTypeDef *hspi, uint8_t reg);
+HAL_StatusTypeDef ADXL355_ReadRegister(
+    SPI_HandleTypeDef *hspi,
+    uint8_t reg,
+    uint8_t *value);
+
+HAL_StatusTypeDef ADXL355_WriteRegister(
+    SPI_HandleTypeDef *hspi,
+    uint8_t reg,
+    uint8_t value);
 
 
 #endif

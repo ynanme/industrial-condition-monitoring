@@ -76,3 +76,17 @@ continued to toggle LD2 every 500 ms.
 
 This demonstrated that interrupt-driven activity can continue while the main
 execution flow is blocked.
+
+## Linux serial console
+
+Connect to the NUCLEO virtual serial port with:
+
+```bash
+picocom -b 115200 /dev/ttyACM0
+```
+
+- `picocom`: serial terminal program
+- `-b 115200`: UART baud rate
+- `/dev/ttyACM0`: Linux serial device exposed by the ST-LINK VCP
+
+Exit with `Ctrl+A`, then `Ctrl+X`.

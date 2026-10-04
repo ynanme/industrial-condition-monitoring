@@ -102,3 +102,16 @@
   - a dummy byte to clock the returned data.
 - Verified the firmware still builds successfully with 0 errors and 0 warnings.
 - See [STM32 MCU peripherals](mcu-peripherals.md) for the MCU peripheral and pin model.
+
+## Session 10 — Robust register access and UART behaviour
+
+- Reviewed the STM32 peripheral model: SPI2, its HAL handle, physical pins and the external ADXL355.
+- Improved `ADXL355_ReadRegister()` to return a HAL status separately from the register value.
+- Clarified that `HAL_OK` validates the STM32-side SPI transfer, not the identity or correctness of the external device.
+- Implemented `ADXL355_WriteRegister()` using a two-byte SPI transaction.
+- Introduced register readback as a way to verify configuration writes.
+- Clarified hardware registers as addressable configuration/status/data storage inside peripherals.
+- Prepared a `PARTID` verification in `main.c` with UART diagnostic messages.
+- Tested SPI without an ADXL355 connected and confirmed that the transaction can succeed while the returned Part ID is unexpected.
+- Explored blocking UART reception, timeouts and the persistence of the last received byte when timeout results are ignored.
+- Documented the Linux `picocom` serial-console command.

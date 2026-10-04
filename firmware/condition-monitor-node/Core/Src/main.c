@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "adxl355.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,18 +99,29 @@ int main(void)
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
 
+  HAL_TIM_Base_Start_IT(&htim2);
+
+
   char message[] = "Hello from STM32!\r\n";
 
-  HAL_UART_Transmit(
-      &huart2,
-      (uint8_t *)message,
-      sizeof(message) - 1,
-      HAL_MAX_DELAY
-  );
+  HAL_UART_Transmit(&huart2, (uint8_t *)message, sizeof(message) - 1, HAL_MAX_DELAY);
+
+  uint8_t adxl_partid;
+  HAL_StatusTypeDef status = ADXL355_ReadRegister(&hspi2, ADXL355_REG_PARTID, &adxl_partid);
+  if (status == HAL_OK) {
+	  if (adxl_partid == ADXL355_PARTID_VALUE) {
+		  char correct_partid_value_message[] = "ADXL355 Part ID verified.\r\n";
+		  HAL_UART_Transmit(&huart2, (uint8_t *)correct_partid_value_message, sizeof(correct_partid_value_message)-1, HAL_MAX_DELAY);
+	  } else {
+		  char incorrect_partid_value_message[] = "ADXL355 returned an unexpected Part ID.\r\n";
+		  HAL_UART_Transmit(&huart2, (uint8_t *)incorrect_partid_value_message, sizeof(incorrect_partid_value_message)-1, HAL_MAX_DELAY);
+	  }
+  } else {
+	  char unread_partid_value_message[] = "Failed to read ADXL355 Part ID.\r\n";
+	  HAL_UART_Transmit(&huart2, (uint8_t *)unread_partid_value_message, sizeof(unread_partid_value_message)-1, HAL_MAX_DELAY);
+  }
 
   uint8_t rx_byte;
-
-  HAL_TIM_Base_Start_IT(&htim2);
 
   /* USER CODE END 2 */
 
@@ -122,9 +133,10 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
-
-	  HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
+	  if (HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY) == HAL_OK)
+	  {
+	      HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
+	  }
 
   }
   /* USER CODE END 3 */
