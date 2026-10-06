@@ -115,3 +115,16 @@
 - Tested SPI without an ADXL355 connected and confirmed that the transaction can succeed while the returned Part ID is unexpected.
 - Explored blocking UART reception, timeouts and the persistence of the last received byte when timeout results are ignored.
 - Documented the Linux `picocom` serial-console command.
+
+## Session 11 — Sampling and filtering fundamentals
+
+- Read the ADXL355 `FILTER` register description and its `ODR_LPF` configuration table.
+- Interpreted the register fields, including the reserved bit, `HPF_CORNER` and `ODR_LPF`.
+- Clarified the difference between:
+  - acceleration samples expressed in `g`;
+  - output data rate expressed in samples per second;
+  - vibration frequency expressed in hertz.
+- Clarified that vibration frequency is derived from a sequence of acceleration samples rather than measured directly at one instant.
+- Studied why a low-pass filter can attenuate high-frequency content without explicitly calculating vibration frequencies.
+- Clarified that filtering changes sample values but does not reduce the configured 2000 samples/s output rate.
+- See [Sampling and filtering](sampling-and-filtering.md).

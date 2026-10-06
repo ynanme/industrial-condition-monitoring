@@ -2,6 +2,7 @@
 
 | Acronym / term | Meaning | Context |
 |---|---|---|
+| ADC | Analog-to-Digital Converter | Converts the sensor's analog acceleration signal into digital values |
 | AF | Alternate Function | Connects a GPIO pin to a peripheral such as USART instead of using it as ordinary GPIO |
 | AHB | Advanced High-performance Bus | High-speed internal bus in the STM32 clock/bus architecture |
 | APB | Advanced Peripheral Bus | Bus connecting many STM32 peripherals; TIM2 is on APB1 |
@@ -17,6 +18,7 @@
 | Fs | Sampling Frequency | Number of samples acquired per second |
 | GPIO | General-Purpose Input/Output | Configurable digital input/output pins |
 | HAL | Hardware Abstraction Layer | ST library providing higher-level access to STM32 hardware |
+| HPF | High-Pass Filter | Filter attenuating lower frequencies while passing higher-frequency content |
 | I²C | Inter-Integrated Circuit | Synchronous serial bus using shared clock and data lines |
 | IDE | Integrated Development Environment | Software used to edit, build, flash and debug code; here STM32CubeIDE |
 | IRQ | Interrupt Request | Hardware request asking the CPU to service an interrupt |
