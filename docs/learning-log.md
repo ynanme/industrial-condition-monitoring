@@ -128,3 +128,17 @@
 - Studied why a low-pass filter can attenuate high-frequency content without explicitly calculating vibration frequencies.
 - Clarified that filtering changes sample values but does not reduce the configured 2000 samples/s output rate.
 - See [Sampling and filtering](sampling-and-filtering.md).
+
+## Session 12 — ADXL355 configuration and initialization
+
+- Revisited the relationship between ODR, internal filtering and the final acceleration samples exposed by the ADXL355.
+- Studied the `RANGE` register and selected the ±2 g range for small vibration measurements.
+- Clarified range, saturation and resolution trade-offs.
+- Practiced read-modify-write operations on register bit fields using bit masks.
+- Studied the `POWER_CTL` register and the `STANDBY` bit used to enter measurement mode.
+- Implemented the first `ADXL355_Init()` sequence:
+  - verify `PARTID`;
+  - configure `FILTER` for 2 kHz ODR / 500 Hz LPF;
+  - configure the ±2 g range;
+  - clear `STANDBY` to start measurements.
+  

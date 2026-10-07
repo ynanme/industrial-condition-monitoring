@@ -41,3 +41,49 @@ HAL_StatusTypeDef ADXL355_WriteRegister(SPI_HandleTypeDef *hspi, uint8_t reg, ui
 
     return status;
 }
+
+
+HAL_StatusTypeDef ADXL355_Init(SPI_HandleTypeDef *hspi) {
+
+	HAL_StatusTypeDef status;
+
+	uint8_t partid;
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_PARTID, &partid);
+	if (status != HAL_OK) {
+		return status;
+	}
+	if (partid != ADXL355_PARTID_VALUE) {
+		return HAL_ERROR;
+	}
+
+	uint8_t filter;
+	status = ADXL355_WriteRegister(hspi, ADXL355_REG_FILTER, 0x01);
+	if (status != HAL_OK) {
+	    return status;
+	}
+
+	uint8_t range;
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_RANGE, &range);
+	if (status != HAL_OK) {
+		return status;
+	}
+	range &= 0xFC;
+	range |= 0x01;
+	status = ADXL355_WriteRegister(hspi, ADXL355_REG_RANGE, range);
+	if (status != HAL_OK) {
+		return status;
+	}
+
+	uint8_t power_ctrl;
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_POWER_CTL, &power_ctrl);
+	if (status != HAL_OK) {
+		return status;
+	}
+	power_ctrl &= 0xFE;
+	status = ADXL355_WriteRegister(hspi, ADXL355_REG_POWER_CTL, power_ctrl);
+	if (status != HAL_OK) {
+		return status;
+	}
+
+	return status;
+}
