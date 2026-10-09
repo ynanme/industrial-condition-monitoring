@@ -56,8 +56,7 @@ HAL_StatusTypeDef ADXL355_Init(SPI_HandleTypeDef *hspi) {
 		return HAL_ERROR;
 	}
 
-	uint8_t filter;
-	status = ADXL355_WriteRegister(hspi, ADXL355_REG_FILTER, 0x01);
+	status = ADXL355_WriteRegister(hspi, ADXL355_REG_FILTER, ADXL355_FILTER_2KHZ);
 	if (status != HAL_OK) {
 	    return status;
 	}
@@ -86,4 +85,32 @@ HAL_StatusTypeDef ADXL355_Init(SPI_HandleTypeDef *hspi) {
 	}
 
 	return status;
+}
+
+
+HAL_StatusTypeDef ADXL355_ReadX(SPI_HandleTypeDef *hspi, int32_t *x_raw) {
+
+	HAL_StatusTypeDef status;
+
+	uint8_t x1, x2, x3;
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_XDATA3, &x3);
+	if (status != HAL_OK) {
+		return status;
+	}
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_XDATA2, &x2);
+	if (status != HAL_OK) {
+		return status;
+	}
+	status = ADXL355_ReadRegister(hspi, ADXL355_REG_XDATA1, &x1);
+	if (status != HAL_OK) {
+		return status;
+	}
+
+	uint32_t raw = ((uint32_t)x3 << 12) | ((uint32_t)x2 << 4)  | ((uint32_t)x1 >> 4);
+	if ((raw & 0x80000) != 0) {
+	    raw |= 0xFFF00000;
+	}
+	*x_raw = (int32_t)raw;
+
+	return HAL_OK;
 }

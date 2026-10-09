@@ -12,6 +12,10 @@
 
 #define ADXL355_FILTER_2KHZ    0x01
 
+#define ADXL355_REG_XDATA3  0x08
+#define ADXL355_REG_XDATA2  0x09
+#define ADXL355_REG_XDATA1  0x0A
+
 
 HAL_StatusTypeDef ADXL355_ReadRegister(
     SPI_HandleTypeDef *hspi,
@@ -24,6 +28,8 @@ HAL_StatusTypeDef ADXL355_WriteRegister(
     uint8_t value);
 
 HAL_StatusTypeDef ADXL355_Init(SPI_HandleTypeDef *hspi);
+
+HAL_StatusTypeDef ADXL355_ReadX(SPI_HandleTypeDef *hspi, int32_t *x_raw);
 
 
 #endif

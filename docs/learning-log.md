@@ -142,3 +142,31 @@
   - configure the ±2 g range;
   - clear `STANDBY` to start measurements.
   
+## Session 13 — ADXL355 raw data representation
+
+- Studied how each ADXL355 axis is encoded as a signed 20-bit value across three 8-bit registers.
+- Reconstructed a 20-bit axis value using bit shifts and bitwise OR operations.
+- Clarified why the three data registers are treated as raw unsigned bytes rather than independent signed values.
+- Studied two's complement representation and why sign extension is required when storing a signed 20-bit value in an `int32_t`.
+- Derived the sign-extension method using bit 19 as the sign bit.
+
+## Session 14 — ADXL355 hardware bring-up and first real measurement
+
+- Received and connected the EVAL-ADXL355-PMDZ board to the NUCLEO-F401RE over SPI.
+- Mapped the ADXL355 SPI signals to the Nucleo board connectors:
+  - `CS` → PB12
+  - `MOSI` → PC3
+  - `MISO` → PC2
+  - `SCLK` → PB10
+  - `VDD` → 3.3 V
+  - `GND` → GND
+- Clarified the distinction between STM32 MCU pin names such as `PB10` and physical Nucleo connector pins such as `CN7` / `CN10`.
+- Reviewed the CubeMX SPI2 pin configuration and the role of the custom `ADXL355_CS` GPIO label.
+- Successfully validated real SPI communication by reading and verifying the ADXL355 `PARTID`.
+- Replaced the standalone `PARTID` test in `main()` with `ADXL355_Init()`.
+- Implemented `ADXL355_ReadX()`:
+  - read `XDATA3`, `XDATA2` and `XDATA1`;
+  - reconstructed the 20-bit raw value;
+  - performed sign extension;
+  - returned the result as `int32_t`.
+- Successfully read real positive and negative X-axis acceleration values from the physical sensor.
