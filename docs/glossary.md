@@ -24,6 +24,7 @@
 | IRQ | Interrupt Request | Hardware request asking the CPU to service an interrupt |
 | ISR | Interrupt Service Routine | Function executed in response to an interrupt |
 | LPF | Low-Pass Filter | Filter passing low frequencies while attenuating higher ones |
+| LSB | Least Significant Bit | Smallest numerical step of a digital value; ADXL355 sensitivity is expressed in LSB/g |
 | MCU | Microcontroller Unit | The microcontroller chip itself; here STM32F401RET6 |
 | MEMS | Micro-Electro-Mechanical System | Technology combining microscopic mechanical structures and electronics |
 | MISO | Master In, Slave Out | SPI data line from peripheral to controller |
@@ -51,3 +52,4 @@
 | UART | Universal Asynchronous Receiver/Transmitter | Asynchronous serial communication peripheral/protocol |
 | USART | Universal Synchronous/Asynchronous Receiver/Transmitter | Peripheral supporting asynchronous UART and synchronous communication |
 | VCP | Virtual COM Port | USB interface exposing the board's serial communication as a host serial port |
+| VLA | Variable Length Array | C array whose size is determined at runtime; avoided here in favor of a fixed maximum buffer size |

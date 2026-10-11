@@ -170,3 +170,16 @@
   - performed sign extension;
   - returned the result as `int32_t`.
 - Successfully read real positive and negative X-axis acceleration values from the physical sensor.
+
+## Session 15 — Three-axis burst reading
+
+- Converted raw ADXL355 acceleration values to `g` using the ±2.048 g range sensitivity of 256000 LSB/g.
+- Clarified the meaning of sensor sensitivity expressed in LSB/g.
+- Identified the contiguous X, Y and Z data registers from `0x08` to `0x10`.
+- Studied ADXL355 multi-byte reads and register address auto-increment.
+- Implemented `ADXL355_ReadRegisters()` for burst SPI reads with a fixed maximum buffer size.
+- Refactored `ADXL355_ReadRegister()` as a wrapper around the multi-register read function.
+- Discussed fixed-size buffers versus variable-length arrays and predictable stack usage in embedded systems.
+- Implemented a private `ADXL355_DecodeAxis()` helper for 20-bit reconstruction and sign extension.
+- Implemented `ADXL355_ReadAcceleration()` to read X, Y and Z in a single 9-register SPI burst.
+- Successfully validated real three-axis acceleration readings on the physical sensor.

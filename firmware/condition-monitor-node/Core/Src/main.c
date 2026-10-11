@@ -118,11 +118,11 @@ int main(void)
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg) - 1, HAL_MAX_DELAY);
   }
 
-  int32_t x_raw;
-  status = ADXL355_ReadX(&hspi2, &x_raw);
+  int32_t x_raw, y_raw, z_raw;
+  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
   if (status == HAL_OK) {
-      char msg[32];
-      int len = snprintf(msg, sizeof(msg), "X = %ld\r\n", (long)x_raw);
+      char msg[80];
+      int len = snprintf(msg, sizeof(msg), "X = %ld, Y = %ld, Z = %ld\r\n", (long)x_raw, (long)y_raw, (long)z_raw);
       HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
   }
 
