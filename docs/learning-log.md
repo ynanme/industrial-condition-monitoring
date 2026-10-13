@@ -183,3 +183,13 @@
 - Implemented a private `ADXL355_DecodeAxis()` helper for 20-bit reconstruction and sign extension.
 - Implemented `ADXL355_ReadAcceleration()` to read X, Y and Z in a single 9-register SPI burst.
 - Successfully validated real three-axis acceleration readings on the physical sensor.
+
+## Session 16 — Live acceleration monitoring
+
+- Enabled floating-point formatting for `printf` / `snprintf` using the linker option for newlib-nano.
+- Displayed X, Y and Z acceleration values directly in `g`.
+- Replaced the one-measurement-per-reset workflow with a non-blocking periodic acquisition using `HAL_GetTick()`.
+- Removed the blocking UART receive from the main loop because it prevented periodic sensor reads from running independently.
+- Validated live three-axis measurements at 10 Hz by physically rotating the sensor and observing gravity move between X, Y and Z.
+- Clarified the distinction between the ADXL355 output data rate (2 kHz) and the slower debug/display rate.
+- Introduced the target acquisition architecture: capture samples at sensor rate, store them in a buffer, then process or display them separately.

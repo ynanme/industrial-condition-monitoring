@@ -118,15 +118,9 @@ int main(void)
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg) - 1, HAL_MAX_DELAY);
   }
 
-  int32_t x_raw, y_raw, z_raw;
-  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
-  if (status == HAL_OK) {
-      char msg[80];
-      int len = snprintf(msg, sizeof(msg), "X = %ld, Y = %ld, Z = %ld\r\n", (long)x_raw, (long)y_raw, (long)z_raw);
-      HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-  }
 
   uint8_t rx_byte;
+  uint32_t last_read = 0;
 
   /* USER CODE END 2 */
 
@@ -138,9 +132,28 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if (HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY) == HAL_OK)
+	  /*if (HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY) == HAL_OK)
 	  {
 	      HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
+	  }*/
+
+	  if (HAL_GetTick() - last_read >= 1000)
+	  {
+		  last_read = HAL_GetTick();
+
+		  int32_t x_raw, y_raw, z_raw;
+		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
+		  if (status == HAL_OK) {
+			  float x_g = x_raw / 256000.0f;
+			  float y_g = y_raw / 256000.0f;
+			  float z_g = z_raw / 256000.0f;
+			  char msg[80];
+			  int len;
+			  len = snprintf(msg, sizeof(msg), "X = %ld, Y = %ld, Z = %ld\r\n", (long)x_raw, (long)y_raw, (long)z_raw);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+			  len = snprintf(msg, sizeof(msg), "X = %.3f, Y = %.3f, Z = %.3f\r\n", x_g, y_g, z_g);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  }
 	  }
 
   }
