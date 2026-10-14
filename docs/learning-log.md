@@ -193,3 +193,15 @@
 - Validated live three-axis measurements at 10 Hz by physically rotating the sensor and observing gravity move between X, Y and Z.
 - Clarified the distinction between the ADXL355 output data rate (2 kHz) and the slower debug/display rate.
 - Introduced the target acquisition architecture: capture samples at sensor rate, store them in a buffer, then process or display them separately.
+
+## Session 17 — DRDY interrupt preparation
+
+- Chose a 512-sample block size as an initial acquisition buffer size.
+- Introduced the role of `DRDY` (Data Ready) for synchronizing acquisition with the ADXL355 output data rate.
+- Clarified the difference between GPIO polling and hardware interrupt-based event detection.
+- Compared CPU execution times with the 0.5 ms sample period at 2 kHz.
+- Connected the ADXL355 `DRDY` output to STM32 pin `PA0` (`A0`, CN8 pin 1).
+- Configured `PA0` as `GPIO_EXTI0` in CubeMX.
+- Configured a rising-edge external interrupt with no pull resistor.
+- Enabled the corresponding EXTI interrupt in the NVIC.
+- Regenerated the firmware configuration from CubeMX.
