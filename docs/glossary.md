@@ -13,6 +13,7 @@
 | CPOL | Clock Polarity | Defines the idle level of the SPI clock |
 | CRC | Cyclic Redundancy Check | Error-detection mechanism based on a calculated check value |
 | CS | Chip Select | Signal used to select an SPI peripheral, usually active LOW |
+| DRDY | Data Ready | Sensor signal indicating that a new measurement is available; used here to trigger an STM32 external interrupt |
 | EXTI | External Interrupt/Event Controller | STM32 block used to generate interrupts/events from external lines |
 | FIFO | First In, First Out | Buffer where the oldest stored data is read first |
 | Fs | Sampling Frequency | Number of samples acquired per second |

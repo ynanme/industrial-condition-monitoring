@@ -64,6 +64,8 @@ static void MX_SPI2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+volatile uint32_t drdy_count = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -119,8 +121,9 @@ int main(void)
   }
 
 
-  uint8_t rx_byte;
+  // uint8_t rx_byte;
   uint32_t last_read = 0;
+  uint32_t previous_drdy_count = drdy_count;
 
   /* USER CODE END 2 */
 
@@ -140,6 +143,7 @@ int main(void)
 	  if (HAL_GetTick() - last_read >= 1000)
 	  {
 		  last_read = HAL_GetTick();
+		  uint32_t current_drdy_count = drdy_count;
 
 		  int32_t x_raw, y_raw, z_raw;
 		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
@@ -153,7 +157,10 @@ int main(void)
 			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 			  len = snprintf(msg, sizeof(msg), "X = %.3f, Y = %.3f, Z = %.3f\r\n", x_g, y_g, z_g);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+			  len = snprintf(msg, sizeof(msg), "DRDY_COUNT = %lu\r\n", (unsigned long)current_drdy_count-previous_drdy_count);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  }
+		  previous_drdy_count = current_drdy_count;
 	  }
 
   }
@@ -389,6 +396,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == ADXL355_DRDY_Pin) {
+		drdy_count++;
+	}
 }
 
 /* USER CODE END 4 */
