@@ -49,6 +49,21 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
+#define ADXL355_BUFFER_SIZE 512
+
+typedef struct
+{
+    int32_t x[ADXL355_BUFFER_SIZE];
+    int32_t y[ADXL355_BUFFER_SIZE];
+    int32_t z[ADXL355_BUFFER_SIZE];
+    uint16_t index;
+} ADXL355_Buffer;
+
+static ADXL355_Buffer acquisition_buffer;
+
+static volatile uint32_t drdy_events = 0;
+static uint32_t spi_error_count = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -122,8 +137,11 @@ int main(void)
 
 
   // uint8_t rx_byte;
-  uint32_t last_read = 0;
-  uint32_t previous_drdy_count = drdy_count;
+  // uint32_t last_read = 0;
+  // uint32_t previous_drdy_count = drdy_count;
+  uint32_t handled_events = drdy_events;
+  uint32_t buffer_start_tick;
+  uint8_t buffer_reported = 0;
 
   /* USER CODE END 2 */
 
@@ -140,7 +158,7 @@ int main(void)
 	      HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
 	  }*/
 
-	  if (HAL_GetTick() - last_read >= 1000)
+	  /*if (HAL_GetTick() - last_read >= 1000)
 	  {
 		  last_read = HAL_GetTick();
 		  uint32_t current_drdy_count = drdy_count;
@@ -155,12 +173,40 @@ int main(void)
 			  int len;
 			  len = snprintf(msg, sizeof(msg), "X = %ld, Y = %ld, Z = %ld\r\n", (long)x_raw, (long)y_raw, (long)z_raw);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-			  len = snprintf(msg, sizeof(msg), "X = %.3f, Y = %.3f, Z = %.3f\r\n", x_g, y_g, z_g);
+			  len = snprintf(msg, sizeof(msg), "X = %.3fg, Y = %.3fg, Z = %.3fg\r\n", x_g, y_g, z_g);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-			  len = snprintf(msg, sizeof(msg), "DRDY_COUNT = %lu\r\n", (unsigned long)current_drdy_count-previous_drdy_count);
+			  len = snprintf(msg, sizeof(msg), "DRDY_COUNT = %lu\r\n", (unsigned long)(current_drdy_count-previous_drdy_count));
 			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  }
 		  previous_drdy_count = current_drdy_count;
+	  }*/
+
+	  if (acquisition_buffer.index == 0) {
+		  buffer_start_tick = HAL_GetTick();
+	  }
+
+	  if (handled_events != drdy_events && acquisition_buffer.index < ADXL355_BUFFER_SIZE) {
+		  int32_t x_raw, y_raw, z_raw;
+		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
+		  if (status == HAL_OK) {
+			  acquisition_buffer.x[acquisition_buffer.index] = x_raw;
+			  acquisition_buffer.y[acquisition_buffer.index] = y_raw;
+			  acquisition_buffer.z[acquisition_buffer.index] = z_raw;
+			  acquisition_buffer.index++;
+		  } else {
+			  spi_error_count++;
+		  }
+		  handled_events++;
+	  }
+
+	  if (acquisition_buffer.index == ADXL355_BUFFER_SIZE && !buffer_reported) {
+		  buffer_reported = 1;
+		  uint32_t buffer_fill_time = HAL_GetTick() - buffer_start_tick;
+		  char msg[128];
+		  int len = snprintf(msg, sizeof(msg),
+				  "Buffer filled: %lu samples in %lums\r\nSPI errors: %lu\r\nHandled events: %lu\r\nDRDY events: %lu\r\n",
+				  (unsigned long)ADXL355_BUFFER_SIZE, (unsigned long)buffer_fill_time, (unsigned long)spi_error_count, (unsigned long)handled_events, (unsigned long)drdy_events);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 	  }
 
   }
@@ -401,7 +447,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == ADXL355_DRDY_Pin) {
-		drdy_count++;
+		drdy_events++;
 	}
 }
 

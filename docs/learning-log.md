@@ -216,3 +216,17 @@
 - Compared cumulative interrupt counting with per-second counting.
 - Identified a measurement issue caused by reading `drdy_count` at different times around blocking UART transmissions; a single snapshot should be used for each measurement interval.
 - Clarified that `DRDY` signals the availability of a sample, while the X/Y/Z measurements themselves will be stored in the acquisition buffer.
+
+## Session 19 — First buffered acquisition
+
+- Reviewed the distinction between the ADXL355 sampling clock, the STM32 clock and the SPI clock.
+- Introduced a 512-sample acquisition buffer storing raw X, Y and Z acceleration values.
+- Chose a Structure of Arrays layout with separate `x[]`, `y[]` and `z[]` arrays.
+- Clarified the role of SRAM and why large long-lived buffers are better stored statically than as large local stack variables.
+- Replaced the simple DRDY diagnostic counter logic with an event-production / event-consumption model using `drdy_events` and `handled_events`.
+- Added SPI error counting and distinguished a handled DRDY event from a successfully stored sample.
+- Implemented the first DRDY-driven buffered acquisition loop.
+- Measured the time required to acquire a complete 512-sample block.
+- Observed a clean acquisition result: 512 stored samples, 0 SPI errors and no final event backlog.
+- Measured a buffer fill time of approximately 258 ms, consistent with the observed sensor sample rate.
+- Identified an important startup issue: DRDY events generated before acquisition begins must be ignored, otherwise the main loop can consume a logical backlog and perform multiple reads without corresponding new sensor samples.
