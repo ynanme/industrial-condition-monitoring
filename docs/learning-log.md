@@ -230,3 +230,14 @@
 - Observed a clean acquisition result: 512 stored samples, 0 SPI errors and no final event backlog.
 - Measured a buffer fill time of approximately 258 ms, consistent with the observed sensor sample rate.
 - Identified an important startup issue: DRDY events generated before acquisition begins must be ignored, otherwise the main loop can consume a logical backlog and perform multiple reads without corresponding new sensor samples.
+
+## Session 20 — Dual-buffer acquisition timing
+
+- Reviewed why 512 samples contain 511 intervals between the first and last sample.
+- Reviewed how pre-existing DRDY events can create a logical backlog and cause repeated reads without corresponding new sensor samples.
+- Introduced two 512-sample acquisition buffers and an `active_buffer` pointer to switch between them.
+- Acquired 1024 consecutive samples by filling buffer A and then buffer B.
+- Measured approximately 515 ms for the complete two-buffer acquisition.
+- Measured approximately 258 ms as the available processing budget while the second 512-sample buffer fills.
+- Completed the acquisition with zero SPI errors and no DRDY event backlog.
+- Clarified that the current implementation only validates buffer switching: acquisition still depends on `main()` performing the blocking SPI reads, so heavy processing cannot yet run concurrently with acquisition.

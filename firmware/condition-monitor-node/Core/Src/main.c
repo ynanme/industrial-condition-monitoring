@@ -59,7 +59,9 @@ typedef struct
     uint16_t index;
 } ADXL355_Buffer;
 
-static ADXL355_Buffer acquisition_buffer;
+static ADXL355_Buffer buffer_a;
+static ADXL355_Buffer buffer_b;
+static ADXL355_Buffer *active_buffer = &buffer_a;
 
 static volatile uint32_t drdy_events = 0;
 static uint32_t spi_error_count = 0;
@@ -136,12 +138,10 @@ int main(void)
   }
 
 
-  // uint8_t rx_byte;
-  // uint32_t last_read = 0;
-  // uint32_t previous_drdy_count = drdy_count;
   uint32_t handled_events = drdy_events;
   uint32_t buffer_start_tick;
-  uint8_t buffer_reported = 0;
+  uint32_t processing_start_tick;
+  uint32_t full_buffers_count = 0;
 
   /* USER CODE END 2 */
 
@@ -153,59 +153,44 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  /*if (HAL_UART_Receive(&huart2, &rx_byte, 1, HAL_MAX_DELAY) == HAL_OK)
-	  {
-	      HAL_UART_Transmit(&huart2, &rx_byte, 1, HAL_MAX_DELAY);
-	  }*/
-
-	  /*if (HAL_GetTick() - last_read >= 1000)
-	  {
-		  last_read = HAL_GetTick();
-		  uint32_t current_drdy_count = drdy_count;
-
-		  int32_t x_raw, y_raw, z_raw;
-		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
-		  if (status == HAL_OK) {
-			  float x_g = x_raw / 256000.0f;
-			  float y_g = y_raw / 256000.0f;
-			  float z_g = z_raw / 256000.0f;
-			  char msg[80];
-			  int len;
-			  len = snprintf(msg, sizeof(msg), "X = %ld, Y = %ld, Z = %ld\r\n", (long)x_raw, (long)y_raw, (long)z_raw);
-			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-			  len = snprintf(msg, sizeof(msg), "X = %.3fg, Y = %.3fg, Z = %.3fg\r\n", x_g, y_g, z_g);
-			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-			  len = snprintf(msg, sizeof(msg), "DRDY_COUNT = %lu\r\n", (unsigned long)(current_drdy_count-previous_drdy_count));
-			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-		  }
-		  previous_drdy_count = current_drdy_count;
-	  }*/
-
-	  if (acquisition_buffer.index == 0) {
+	  if (active_buffer == &buffer_a && active_buffer->index == 0) {
 		  buffer_start_tick = HAL_GetTick();
 	  }
 
-	  if (handled_events != drdy_events && acquisition_buffer.index < ADXL355_BUFFER_SIZE) {
+	  if (handled_events != drdy_events && active_buffer->index < ADXL355_BUFFER_SIZE) {
 		  int32_t x_raw, y_raw, z_raw;
 		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
 		  if (status == HAL_OK) {
-			  acquisition_buffer.x[acquisition_buffer.index] = x_raw;
-			  acquisition_buffer.y[acquisition_buffer.index] = y_raw;
-			  acquisition_buffer.z[acquisition_buffer.index] = z_raw;
-			  acquisition_buffer.index++;
+			  active_buffer->x[active_buffer->index] = x_raw;
+			  active_buffer->y[active_buffer->index] = y_raw;
+			  active_buffer->z[active_buffer->index] = z_raw;
+			  active_buffer->index++;
 		  } else {
 			  spi_error_count++;
 		  }
 		  handled_events++;
 	  }
 
-	  if (acquisition_buffer.index == ADXL355_BUFFER_SIZE && !buffer_reported) {
-		  buffer_reported = 1;
-		  uint32_t buffer_fill_time = HAL_GetTick() - buffer_start_tick;
+	  if (active_buffer->index == ADXL355_BUFFER_SIZE) {
+		  full_buffers_count++;
+		  if (full_buffers_count == 1) {
+			  processing_start_tick = HAL_GetTick();
+		  }
+		  if (active_buffer == &buffer_a) {
+			  active_buffer = &buffer_b;
+		  } else {
+			  active_buffer = &buffer_a;
+		  }
+	  }
+
+	  if (full_buffers_count == 2) {
+		  uint32_t now = HAL_GetTick();
+		  uint32_t buffer_fill_time = now - buffer_start_tick;
+		  uint32_t processing_budget = now - processing_start_tick;
 		  char msg[128];
 		  int len = snprintf(msg, sizeof(msg),
-				  "Buffer filled: %lu samples in %lums\r\nSPI errors: %lu\r\nHandled events: %lu\r\nDRDY events: %lu\r\n",
-				  (unsigned long)ADXL355_BUFFER_SIZE, (unsigned long)buffer_fill_time, (unsigned long)spi_error_count, (unsigned long)handled_events, (unsigned long)drdy_events);
+				  "Buffers filled in %lu ms\r\nProcessing budget: %lums\r\nSPI errors: %lu\r\nHandled events: %lu\r\nDRDY events: %lu\r\n",
+				  (unsigned long)buffer_fill_time, (unsigned long)processing_budget, (unsigned long)spi_error_count, (unsigned long)handled_events, (unsigned long)drdy_events);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 	  }
 
