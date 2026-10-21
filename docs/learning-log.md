@@ -241,3 +241,29 @@
 - Measured approximately 258 ms as the available processing budget while the second 512-sample buffer fills.
 - Completed the acquisition with zero SPI errors and no DRDY event backlog.
 - Clarified that the current implementation only validates buffer switching: acquisition still depends on `main()` performing the blocking SPI reads, so heavy processing cannot yet run concurrently with acquisition.
+
+## Session 21 — Introducing DMA for asynchronous acquisition
+
+- Identified the limitation of the current dual-buffer design: `main()` still performs every blocking SPI read, so heavy buffer processing would interrupt acquisition.
+- Compared possible approaches including interrupt-driven acquisition, threads/RTOS and hardware-assisted transfers.
+- Introduced DMA (Direct Memory Access) as a hardware peripheral capable of transferring data between SPI and memory without continuous CPU involvement.
+- Clarified that DMA provides hardware concurrency: the CPU can execute code while SPI and DMA perform a transfer.
+- Defined the intended acquisition flow: DRDY/EXTI starts a SPI DMA transfer, DMA transfers the bytes, and a transfer-complete callback finalizes the sample.
+- Clarified that DMA only transfers bytes; decoding ADXL355 X/Y/Z data and higher-level signal processing still require CPU code.
+- Distinguished blocking `HAL_SPI_TransmitReceive()` from asynchronous `HAL_SPI_TransmitReceive_DMA()`.
+- Identified that the current synchronous `ADXL355_ReadAcceleration()` API cannot be reused unchanged for asynchronous DMA acquisition because the data is not yet available when the start function returns.
+
+## Session 22 — Configuring SPI2 DMA in CubeMX
+
+- Configured DMA support for SPI2 in CubeMX.
+- Added separate DMA streams for SPI2 RX and TX.
+- Configured peripheral-to-memory transfer for RX and memory-to-peripheral transfer for TX.
+- Enabled memory address increment while keeping the SPI peripheral address fixed.
+- Used byte-sized transfers and normal DMA mode.
+- Enabled DMA1 Stream3 and Stream4 interrupts in the NVIC.
+- Reviewed the generated `MX_DMA_Init()` function and DMA IRQ handlers.
+- Reviewed the generated SPI2 DMA configuration inside `HAL_SPI_MspInit()`.
+- Identified how `__HAL_LINKDMA()` associates the SPI handle with its RX and TX DMA handles.
+- Clarified the relationship between CubeMX configuration, generated HAL code and underlying MCU peripherals.
+- Introduced the lifetime constraint of DMA buffers: memory used by an asynchronous transfer must remain valid after the start function returns.
+- Clarified why chip select cannot be released immediately after starting an asynchronous SPI DMA transfer.
