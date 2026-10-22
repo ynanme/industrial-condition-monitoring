@@ -1,6 +1,12 @@
 #include "adxl355.h"
 
 
+#define ADXL355_DMA_TRANSFER_SIZE 10
+
+static uint8_t dma_tx[ADXL355_DMA_TRANSFER_SIZE];
+static uint8_t dma_rx[ADXL355_DMA_TRANSFER_SIZE];
+
+
 HAL_StatusTypeDef ADXL355_ReadRegister(SPI_HandleTypeDef *hspi, uint8_t reg, uint8_t *value)
 {
     return ADXL355_ReadRegisters(hspi, reg, value, 1);
@@ -37,6 +43,30 @@ HAL_StatusTypeDef ADXL355_ReadRegisters(SPI_HandleTypeDef *hspi, uint8_t start_r
 					  GPIO_PIN_SET);
 
 	return status;
+}
+
+
+HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi)
+{
+    dma_tx[0] = (ADXL355_REG_XDATA3 << 1) | 0x01;
+
+    for (uint8_t i = 1; i < ADXL355_DMA_TRANSFER_SIZE; i++)
+    {
+        dma_tx[i] = 0x00;
+    }
+
+    HAL_GPIO_WritePin(
+        ADXL355_CS_GPIO_Port,
+        ADXL355_CS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    return HAL_SPI_TransmitReceive_DMA(
+        hspi,
+        dma_tx,
+        dma_rx,
+        ADXL355_DMA_TRANSFER_SIZE
+    );
 }
 
 

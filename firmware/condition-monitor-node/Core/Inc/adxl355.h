@@ -36,6 +36,8 @@ HAL_StatusTypeDef ADXL355_ReadRegisters(
     uint8_t *values,
     uint16_t n);
 
+HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi);
+
 HAL_StatusTypeDef ADXL355_WriteRegister(
     SPI_HandleTypeDef *hspi,
     uint8_t reg,

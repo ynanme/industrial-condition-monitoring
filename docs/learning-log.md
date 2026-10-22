@@ -267,3 +267,15 @@
 - Clarified the relationship between CubeMX configuration, generated HAL code and underlying MCU peripherals.
 - Introduced the lifetime constraint of DMA buffers: memory used by an asynchronous transfer must remain valid after the start function returns.
 - Clarified why chip select cannot be released immediately after starting an asynchronous SPI DMA transfer.
+
+## Session 23 — Understanding and starting SPI DMA acquisition
+
+- Clarified the roles of DMA controller, stream, channel and peripheral DMA requests.
+- Identified the DMA stream as the hardware transfer engine and the channel as the request-routing selection used by the stream.
+- Clarified that SPI2 paces DMA transfers by issuing TX and RX requests when its data register is ready.
+- Reviewed full-duplex SPI behavior with DMA: TX supplies the command and dummy bytes while RX simultaneously stores returned bytes.
+- Clarified that the SPI peripheral address remains fixed while the DMA memory address increments through the TX and RX buffers.
+- Related the generated CubeMX DMA configuration to the underlying SPI2 and DMA hardware behavior.
+- Introduced static driver-private DMA TX/RX buffers whose lifetime extends beyond the asynchronous start function.
+- Implemented `ADXL355_StartReadDMA()` as the asynchronous start half of an acceleration read.
+- Kept chip select asserted after starting the DMA transfer because the transaction continues after the function returns.
