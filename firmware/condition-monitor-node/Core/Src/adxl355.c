@@ -46,30 +46,6 @@ HAL_StatusTypeDef ADXL355_ReadRegisters(SPI_HandleTypeDef *hspi, uint8_t start_r
 }
 
 
-HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi)
-{
-    dma_tx[0] = (ADXL355_REG_XDATA3 << 1) | 0x01;
-
-    for (uint8_t i = 1; i < ADXL355_DMA_TRANSFER_SIZE; i++)
-    {
-        dma_tx[i] = 0x00;
-    }
-
-    HAL_GPIO_WritePin(
-        ADXL355_CS_GPIO_Port,
-        ADXL355_CS_Pin,
-        GPIO_PIN_RESET
-    );
-
-    return HAL_SPI_TransmitReceive_DMA(
-        hspi,
-        dma_tx,
-        dma_rx,
-        ADXL355_DMA_TRANSFER_SIZE
-    );
-}
-
-
 HAL_StatusTypeDef ADXL355_WriteRegister(SPI_HandleTypeDef *hspi, uint8_t reg, uint8_t value)
 {
     uint8_t tx[2];
@@ -182,4 +158,43 @@ HAL_StatusTypeDef ADXL355_ReadAcceleration(SPI_HandleTypeDef *hspi, int32_t *x_r
 	*z_raw = ADXL355_DecodeAxis(data[6], data[7], data[8]);
 
 	return HAL_OK;
+}
+
+
+HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi)
+{
+    dma_tx[0] = (ADXL355_REG_XDATA3 << 1) | 0x01;
+
+    for (uint8_t i = 1; i < ADXL355_DMA_TRANSFER_SIZE; i++)
+    {
+        dma_tx[i] = 0x00;
+    }
+
+    HAL_GPIO_WritePin(
+        ADXL355_CS_GPIO_Port,
+        ADXL355_CS_Pin,
+        GPIO_PIN_RESET
+    );
+
+    return HAL_SPI_TransmitReceive_DMA(
+        hspi,
+        dma_tx,
+        dma_rx,
+        ADXL355_DMA_TRANSFER_SIZE
+    );
+}
+
+
+void ADXL355_CompleteReadDMA(int32_t *x_raw, int32_t *y_raw, int32_t *z_raw) {
+
+	HAL_GPIO_WritePin(
+		ADXL355_CS_GPIO_Port,
+		ADXL355_CS_Pin,
+		GPIO_PIN_SET
+	);
+
+	*x_raw = ADXL355_DecodeAxis(dma_rx[1], dma_rx[2], dma_rx[3]);
+	*y_raw = ADXL355_DecodeAxis(dma_rx[4], dma_rx[5], dma_rx[6]);
+	*z_raw = ADXL355_DecodeAxis(dma_rx[7], dma_rx[8], dma_rx[9]);
+
 }

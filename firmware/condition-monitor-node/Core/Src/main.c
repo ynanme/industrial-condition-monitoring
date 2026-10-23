@@ -459,6 +459,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi->Instance == SPI2)
+    {
+        int32_t x_raw, y_raw, z_raw;
+        ADXL355_CompleteReadDMA(&x_raw, &y_raw, &z_raw);
+
+        active_buffer->x[active_buffer->index] = x_raw;
+        active_buffer->y[active_buffer->index] = y_raw;
+        active_buffer->z[active_buffer->index] = z_raw;
+        active_buffer->index++;
+
+        if (active_buffer->index == ADXL355_BUFFER_SIZE) {
+        	if (active_buffer == &buffer_a) {
+        		active_buffer = &buffer_b;
+        	} else {
+        		active_buffer = &buffer_a;
+        	}
+        }
+    }
+}
+
 /* USER CODE END 4 */
 
 /**

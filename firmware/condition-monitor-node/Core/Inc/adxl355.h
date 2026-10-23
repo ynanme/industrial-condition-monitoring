@@ -38,6 +38,12 @@ HAL_StatusTypeDef ADXL355_ReadRegisters(
 
 HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi);
 
+void ADXL355_CompleteReadDMA(
+    int32_t *x_raw,
+    int32_t *y_raw,
+    int32_t *z_raw
+);
+
 HAL_StatusTypeDef ADXL355_WriteRegister(
     SPI_HandleTypeDef *hspi,
     uint8_t reg,

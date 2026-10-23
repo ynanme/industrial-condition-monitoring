@@ -279,3 +279,15 @@
 - Introduced static driver-private DMA TX/RX buffers whose lifetime extends beyond the asynchronous start function.
 - Implemented `ADXL355_StartReadDMA()` as the asynchronous start half of an acceleration read.
 - Kept chip select asserted after starting the DMA transfer because the transaction continues after the function returns.
+
+## Session 24 — Completing the DMA acquisition path
+
+- Introduced `HAL_SPI_TxRxCpltCallback()` as the CPU callback executed when a SPI DMA transfer completes.
+- Added a driver-level completion function to keep the private DMA RX buffer encapsulated inside `adxl355.c`.
+- Decoded the received DMA bytes into raw X, Y and Z acceleration values after transfer completion.
+- Released the ADXL355 chip select only after the asynchronous SPI transaction had actually finished.
+- Clarified why short, bounded work such as axis decoding and buffer writes can reasonably run inside the completion callback, while blocking I/O and heavy signal processing should not.
+- Clarified the role of `NULL` pointer checks and why `HAL_StatusTypeDef` is not necessarily useful for a completion function that cannot currently fail.
+- Moved sample storage and buffer index advancement into the DMA completion path.
+- Clarified that `main()` must process a completed buffer, not the currently active acquisition buffer.
+- Introduced the need for a separate ready-buffer indication so the DMA callback can hand a full buffer to `main()` while acquisition continues in the other buffer.
