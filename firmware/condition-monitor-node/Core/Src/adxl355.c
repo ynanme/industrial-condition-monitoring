@@ -176,12 +176,22 @@ HAL_StatusTypeDef ADXL355_StartReadDMA(SPI_HandleTypeDef *hspi)
         GPIO_PIN_RESET
     );
 
-    return HAL_SPI_TransmitReceive_DMA(
+    HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_DMA(
         hspi,
         dma_tx,
         dma_rx,
         ADXL355_DMA_TRANSFER_SIZE
     );
+
+    if (status != HAL_OK) {
+        HAL_GPIO_WritePin(
+            ADXL355_CS_GPIO_Port,
+            ADXL355_CS_Pin,
+            GPIO_PIN_SET
+        );
+    }
+
+    return status;
 }
 
 

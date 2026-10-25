@@ -291,3 +291,15 @@
 - Moved sample storage and buffer index advancement into the DMA completion path.
 - Clarified that `main()` must process a completed buffer, not the currently active acquisition buffer.
 - Introduced the need for a separate ready-buffer indication so the DMA callback can hand a full buffer to `main()` while acquisition continues in the other buffer.
+
+## Session 25 — Continuous DMA double buffering
+
+- Connected the ADXL355 DRDY interrupt to asynchronous SPI DMA acquisition.
+- Validated continuous alternating acquisition between two 512-sample buffers.
+- Introduced `ready_buffer` as the handoff mechanism between interrupt-driven acquisition and processing in `main()`.
+- Clarified the distinction between the active acquisition buffer and the completed buffer being processed by `main()`.
+- Used a local buffer pointer in `main()` as a snapshot of the volatile shared `ready_buffer`.
+- Clarified why `ready_buffer` remains `volatile` even though `main()` also modifies it.
+- Added detection of the case where a buffer becomes full while the previous ready buffer has not yet been released.
+- Validated repeated A/B buffer handoffs with zero observed buffer overruns and zero observed SPI start failures during the final run.
+- Identified two points to resolve next: the overrun recovery policy and the distinction between a DMA start failure and an SPI/DMA transfer error.

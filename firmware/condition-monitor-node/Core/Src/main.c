@@ -63,10 +63,14 @@ typedef struct
 
 static ADXL355_Buffer buffer_a;
 static ADXL355_Buffer buffer_b;
+
 static ADXL355_Buffer *active_buffer = &buffer_a;
+static ADXL355_Buffer * volatile ready_buffer = NULL;
+
+static volatile uint32_t buffer_overrun_count = 0;
 
 static volatile uint32_t drdy_events = 0;
-static uint32_t spi_error_count = 0;
+static volatile uint32_t spi_error_count = 0;
 
 /* USER CODE END PV */
 
@@ -157,7 +161,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if (active_buffer == &buffer_a && active_buffer->index == 0) {
+	  /*if (active_buffer == &buffer_a && active_buffer->index == 0) {
 		  buffer_start_tick = HAL_GetTick();
 	  }
 
@@ -196,6 +200,20 @@ int main(void)
 				  "Buffers filled in %lu ms\r\nProcessing budget: %lums\r\nSPI errors: %lu\r\nHandled events: %lu\r\nDRDY events: %lu\r\n",
 				  (unsigned long)buffer_fill_time, (unsigned long)processing_budget, (unsigned long)spi_error_count, (unsigned long)handled_events, (unsigned long)drdy_events);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+	  }*/
+
+	  ADXL355_Buffer *buffer_to_process = ready_buffer;
+	  if (buffer_to_process != NULL) {
+		  char msg[64];
+		  int len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Buffer at %p done being processed.\r\n", (void *)buffer_to_process);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Buffer overrun count: %lu.\r\n", buffer_overrun_count);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "SPI errors count: %lu.\r\n", spi_error_count);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  ready_buffer = NULL;
 	  }
 
   }
@@ -456,6 +474,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == ADXL355_DRDY_Pin) {
 		drdy_events++;
+		if (ADXL355_StartReadDMA(&hspi2) != HAL_OK) {
+			spi_error_count++;
+		}
 	}
 }
 
@@ -472,10 +493,16 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
         active_buffer->index++;
 
         if (active_buffer->index == ADXL355_BUFFER_SIZE) {
-        	if (active_buffer == &buffer_a) {
-        		active_buffer = &buffer_b;
+        	if (ready_buffer == NULL) {
+        		ready_buffer = active_buffer;
+				if (active_buffer == &buffer_a) {
+					active_buffer = &buffer_b;
+				} else {
+					active_buffer = &buffer_a;
+				}
+				active_buffer->index = 0;
         	} else {
-        		active_buffer = &buffer_a;
+        		buffer_overrun_count++;
         	}
         }
     }
