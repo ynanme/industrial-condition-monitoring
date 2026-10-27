@@ -70,6 +70,7 @@ static ADXL355_Buffer * volatile ready_buffer = NULL;
 static volatile uint32_t buffer_overrun_count = 0;
 
 static volatile uint32_t drdy_events = 0;
+static volatile uint32_t dma_start_fail_count = 0;
 static volatile uint32_t spi_error_count = 0;
 
 /* USER CODE END PV */
@@ -210,6 +211,8 @@ int main(void)
 		  len = snprintf(msg, sizeof(msg), "Buffer at %p done being processed.\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Buffer overrun count: %lu.\r\n", buffer_overrun_count);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "DMA start fail count: %lu.\r\n", dma_start_fail_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "SPI errors count: %lu.\r\n", spi_error_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
@@ -475,7 +478,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if (GPIO_Pin == ADXL355_DRDY_Pin) {
 		drdy_events++;
 		if (ADXL355_StartReadDMA(&hspi2) != HAL_OK) {
-			spi_error_count++;
+			dma_start_fail_count++;
 		}
 	}
 }
@@ -505,6 +508,13 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
         		buffer_overrun_count++;
         	}
         }
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+    if (hspi->Instance == SPI2) {
+        spi_error_count++;
     }
 }
 

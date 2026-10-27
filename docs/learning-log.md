@@ -303,3 +303,12 @@
 - Added detection of the case where a buffer becomes full while the previous ready buffer has not yet been released.
 - Validated repeated A/B buffer handoffs with zero observed buffer overruns and zero observed SPI start failures during the final run.
 - Identified two points to resolve next: the overrun recovery policy and the distinction between a DMA start failure and an SPI/DMA transfer error.
+
+## Session 26 — DMA failures and buffer overrun policy
+
+- Clarified the lifecycle of an asynchronous SPI DMA transaction:
+  - the return value of `HAL_SPI_TransmitReceive_DMA()` reports whether the transfer could be started;
+  - completion and error callbacks report what happened after a successfully started transfer.
+- Introduced a dedicated `dma_start_fail_count` to track failed acquisition starts separately from SPI transfer errors.
+- Analyzed the double-buffer overrun case: one buffer is still being processed while the second buffer becomes full, leaving no free acquisition buffer.
+- Compared three possible overrun policies: stop acquisition, discard the newly completed buffer, or sacrifice the older buffer currently being processed.
