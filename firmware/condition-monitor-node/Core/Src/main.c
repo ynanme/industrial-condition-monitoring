@@ -67,7 +67,7 @@ static ADXL355_Buffer buffer_b;
 static ADXL355_Buffer *active_buffer = &buffer_a;
 static ADXL355_Buffer * volatile ready_buffer = NULL;
 
-static volatile uint32_t buffer_overrun_count = 0;
+static volatile uint32_t dropped_buffer_count = 0;
 
 static volatile uint32_t drdy_events = 0;
 static volatile uint32_t dma_start_fail_count = 0;
@@ -147,10 +147,12 @@ int main(void)
   }
 
 
-  uint32_t handled_events = drdy_events;
-  uint32_t buffer_start_tick;
-  uint32_t processing_start_tick;
-  uint32_t full_buffers_count = 0;
+  // uint32_t handled_events = drdy_events;
+  // uint32_t buffer_start_tick;
+  // uint32_t processing_start_tick;
+  // uint32_t full_buffers_count = 0;
+
+  uint32_t processed_buffer_count = 0;
 
   /* USER CODE END 2 */
 
@@ -208,9 +210,13 @@ int main(void)
 		  char msg[64];
 		  int len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  HAL_Delay(700);
+		  processed_buffer_count++;
 		  len = snprintf(msg, sizeof(msg), "Buffer at %p done being processed.\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-		  len = snprintf(msg, sizeof(msg), "Buffer overrun count: %lu.\r\n", buffer_overrun_count);
+		  len = snprintf(msg, sizeof(msg), "Processed buffers count: %lu.\r\n", processed_buffer_count);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Dropped buffers count: %lu.\r\n", dropped_buffer_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "DMA start fail count: %lu.\r\n", dma_start_fail_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
@@ -503,10 +509,10 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 				} else {
 					active_buffer = &buffer_a;
 				}
-				active_buffer->index = 0;
         	} else {
-        		buffer_overrun_count++;
+        		dropped_buffer_count++;
         	}
+			active_buffer->index = 0;
         }
     }
 }

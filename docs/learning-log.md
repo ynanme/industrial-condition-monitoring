@@ -312,3 +312,11 @@
 - Introduced a dedicated `dma_start_fail_count` to track failed acquisition starts separately from SPI transfer errors.
 - Analyzed the double-buffer overrun case: one buffer is still being processed while the second buffer becomes full, leaving no free acquisition buffer.
 - Compared three possible overrun policies: stop acquisition, discard the newly completed buffer, or sacrifice the older buffer currently being processed.
+
+## Session 27 — Buffer overrun handling
+
+- Explored how real embedded systems handle temporary processing delays using additional buffering, queues, and buffer pools.
+- Chose a simple overrun policy for the current two-buffer architecture: preserve the buffer already being processed and discard the newly completed buffer when no processing slot is available.
+- Artificially introduced a 700 ms processing delay to validate the overrun policy.
+- Observed approximately two dropped 512-sample buffers per processed buffer, matching the expected ~258 ms buffer period.
+- Identified the next stage of the project: processing the acquired X/Y/Z samples into useful condition-monitoring features. RMS and FFT will be introduced from first principles before implementation.
