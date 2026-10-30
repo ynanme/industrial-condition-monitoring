@@ -21,17 +21,48 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "adxl355.h"
+
 #include <stdio.h>
+#include <math.h>
+
+#include "adxl355.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+#define ADXL355_BUFFER_SIZE 512
+
+typedef struct
+{
+    int32_t x[ADXL355_BUFFER_SIZE];
+    int32_t y[ADXL355_BUFFER_SIZE];
+    int32_t z[ADXL355_BUFFER_SIZE];
+    uint16_t index;
+} ADXL355_Buffer;
+
+typedef struct
+{
+    float mean_x_g;
+    float mean_y_g;
+    float mean_z_g;
+
+    float std_x_g;
+    float std_y_g;
+    float std_z_g;
+
+    float p2p_x_g;
+    float p2p_y_g;
+    float p2p_z_g;
+} ADXL355_Features;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define ADXL355_SENSITIVITY_LSB_PER_G 256000.0f
 
 /* USER CODE END PD */
 
@@ -50,16 +81,6 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
-#define ADXL355_BUFFER_SIZE 512
-
-typedef struct
-{
-    int32_t x[ADXL355_BUFFER_SIZE];
-    int32_t y[ADXL355_BUFFER_SIZE];
-    int32_t z[ADXL355_BUFFER_SIZE];
-    uint16_t index;
-} ADXL355_Buffer;
 
 static ADXL355_Buffer buffer_a;
 static ADXL355_Buffer buffer_b;
@@ -89,7 +110,77 @@ static void MX_SPI2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-volatile uint32_t drdy_count = 0;
+
+static void ProcessBuffer(const ADXL355_Buffer *buffer, ADXL355_Features *features)
+{
+	int32_t min_x = buffer->x[0];
+	int32_t max_x = buffer->x[0];
+    int64_t sum_x = buffer->x[0];
+
+	int32_t min_y = buffer->y[0];
+	int32_t max_y = buffer->y[0];
+    int64_t sum_y = buffer->y[0];
+
+	int32_t min_z = buffer->z[0];
+	int32_t max_z = buffer->z[0];
+    int64_t sum_z = buffer->z[0];
+
+    for (int i = 1; i < ADXL355_BUFFER_SIZE; i++)
+    {
+    	if (buffer->x[i] < min_x)
+    	    min_x = buffer->x[i];
+    	if (buffer->x[i] > max_x)
+    	    max_x = buffer->x[i];
+        sum_x += buffer->x[i];
+
+    	if (buffer->y[i] < min_y)
+			min_y = buffer->y[i];
+		if (buffer->y[i] > max_y)
+			max_y = buffer->y[i];
+        sum_y += buffer->y[i];
+
+		if (buffer->z[i] < min_z)
+			min_z = buffer->z[i];
+		if (buffer->z[i] > max_z)
+			max_z = buffer->z[i];
+        sum_z += buffer->z[i];
+    }
+
+    float mean_x_raw = (float)sum_x / ADXL355_BUFFER_SIZE;
+    float mean_y_raw = (float)sum_y / ADXL355_BUFFER_SIZE;
+    float mean_z_raw = (float)sum_z / ADXL355_BUFFER_SIZE;
+
+    float squared_diff_sum_x = 0.0f;
+    float squared_diff_sum_y = 0.0f;
+    float squared_diff_sum_z = 0.0f;
+
+    for (int i = 0; i < ADXL355_BUFFER_SIZE; i++)
+    {
+    	float diff_x = buffer->x[i] - mean_x_raw;
+    	float diff_y = buffer->y[i] - mean_y_raw;
+    	float diff_z = buffer->z[i] - mean_z_raw;
+    	squared_diff_sum_x += diff_x * diff_x;
+    	squared_diff_sum_y += diff_y * diff_y;
+    	squared_diff_sum_z += diff_z * diff_z;
+    }
+
+    float std_x_raw = sqrtf(squared_diff_sum_x / ADXL355_BUFFER_SIZE);
+    float std_y_raw = sqrtf(squared_diff_sum_y / ADXL355_BUFFER_SIZE);
+    float std_z_raw = sqrtf(squared_diff_sum_z / ADXL355_BUFFER_SIZE);
+
+    features->mean_x_g = mean_x_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->mean_y_g = mean_y_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->mean_z_g = mean_z_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+
+    features->std_x_g = std_x_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->std_y_g = std_y_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->std_z_g = std_z_raw / ADXL355_SENSITIVITY_LSB_PER_G;
+
+    features->p2p_x_g = (max_x - min_x) / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->p2p_y_g = (max_y - min_y) / ADXL355_SENSITIVITY_LSB_PER_G;
+    features->p2p_z_g = (max_z - min_z) / ADXL355_SENSITIVITY_LSB_PER_G;
+}
+
 
 /* USER CODE END 0 */
 
@@ -146,11 +237,10 @@ int main(void)
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg) - 1, HAL_MAX_DELAY);
   }
 
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
-  // uint32_t handled_events = drdy_events;
-  // uint32_t buffer_start_tick;
-  // uint32_t processing_start_tick;
-  // uint32_t full_buffers_count = 0;
 
   uint32_t processed_buffer_count = 0;
 
@@ -164,56 +254,31 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  /*if (active_buffer == &buffer_a && active_buffer->index == 0) {
-		  buffer_start_tick = HAL_GetTick();
-	  }
-
-	  if (handled_events != drdy_events && active_buffer->index < ADXL355_BUFFER_SIZE) {
-		  int32_t x_raw, y_raw, z_raw;
-		  status = ADXL355_ReadAcceleration(&hspi2, &x_raw, &y_raw, &z_raw);
-		  if (status == HAL_OK) {
-			  active_buffer->x[active_buffer->index] = x_raw;
-			  active_buffer->y[active_buffer->index] = y_raw;
-			  active_buffer->z[active_buffer->index] = z_raw;
-			  active_buffer->index++;
-		  } else {
-			  spi_error_count++;
-		  }
-		  handled_events++;
-	  }
-
-	  if (active_buffer->index == ADXL355_BUFFER_SIZE) {
-		  full_buffers_count++;
-		  if (full_buffers_count == 1) {
-			  processing_start_tick = HAL_GetTick();
-		  }
-		  if (active_buffer == &buffer_a) {
-			  active_buffer = &buffer_b;
-		  } else {
-			  active_buffer = &buffer_a;
-		  }
-	  }
-
-	  if (full_buffers_count == 2) {
-		  uint32_t now = HAL_GetTick();
-		  uint32_t buffer_fill_time = now - buffer_start_tick;
-		  uint32_t processing_budget = now - processing_start_tick;
-		  char msg[128];
-		  int len = snprintf(msg, sizeof(msg),
-				  "Buffers filled in %lu ms\r\nProcessing budget: %lums\r\nSPI errors: %lu\r\nHandled events: %lu\r\nDRDY events: %lu\r\n",
-				  (unsigned long)buffer_fill_time, (unsigned long)processing_budget, (unsigned long)spi_error_count, (unsigned long)handled_events, (unsigned long)drdy_events);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-	  }*/
-
 	  ADXL355_Buffer *buffer_to_process = ready_buffer;
 	  if (buffer_to_process != NULL) {
+
+
 		  char msg[64];
 		  int len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-		  HAL_Delay(700);
+
+		  ADXL355_Features features;
+		  uint32_t start = HAL_GetTick();
+		  uint32_t start_cycles = DWT->CYCCNT;
+		  ProcessBuffer(buffer_to_process, &features);
+		  uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
+		  uint32_t processing_time_ms = HAL_GetTick() - start;
+		  float processing_time_us = (float)processing_cycles / (SystemCoreClock / 1000000.0f);
+		  len = snprintf(msg, sizeof(msg), "X: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_x_g, features.std_x_g, features.p2p_x_g);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Y: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_y_g, features.std_y_g, features.p2p_y_g);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Z: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_z_g, features.std_z_g, features.p2p_z_g);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  processed_buffer_count++;
 		  len = snprintf(msg, sizeof(msg), "Buffer at %p done being processed.\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+
 		  len = snprintf(msg, sizeof(msg), "Processed buffers count: %lu.\r\n", processed_buffer_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Dropped buffers count: %lu.\r\n", dropped_buffer_count);
@@ -222,7 +287,13 @@ int main(void)
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "SPI errors count: %lu.\r\n", spi_error_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+
 		  ready_buffer = NULL;
+
+		  len = snprintf(msg, sizeof(msg), "Processing time ms: %lu.\r\n", processing_time_ms);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  len = snprintf(msg, sizeof(msg), "Processing: %lu cycles, %.2f us\r\n\n", (unsigned long)processing_cycles, processing_time_us);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 	  }
 
   }

@@ -320,3 +320,23 @@
 - Artificially introduced a 700 ms processing delay to validate the overrun policy.
 - Observed approximately two dropped 512-sample buffers per processed buffer, matching the expected ~258 ms buffer period.
 - Identified the next stage of the project: processing the acquired X/Y/Z samples into useful condition-monitoring features. RMS and FFT will be introduced from first principles before implementation.
+
+## Session 28 — First signal-processing concepts
+
+- Started processing the acquired 512-sample X/Y/Z buffers.
+- Introduced mean, RMS, standard deviation, and peak-to-peak concepts.
+- Established the relation `RMS² = mean² + std²`.
+- Started implementing the first processing pass: accumulation of X/Y/Z sums and computation of raw means.
+- Reviewed CubeMX user-code sections: PTD, PD, PM, PV and PFP.
+- Identified the next step: second pass over the buffer to compute variance / standard deviation, then convert features to g.
+
+## Session 29 — First condition-monitoring features
+
+- Completed two-pass processing of 512-sample X/Y/Z acceleration buffers.
+- Computed mean acceleration and standard deviation for each axis.
+- Validated mean values against the expected ~1 g gravity vector while the sensor was stationary.
+- Validated standard deviation as a vibration indicator by physically moving the sensor.
+- Added peak-to-peak acceleration for each axis using min/max tracking during the first processing pass.
+- Observed peak-to-peak saturation near 4.096 g while using the ADXL355 ±2.048 g range.
+- Measured `ProcessBuffer()` at approximately 1.5 ms after adding mean, standard deviation and peak-to-peak processing, versus an acquisition-buffer period of roughly 258 ms.
+- Next step: introduce frequency-domain information from first principles before implementing FFT-based features.
