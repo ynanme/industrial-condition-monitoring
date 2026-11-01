@@ -5,8 +5,10 @@
 | ADC | Analog-to-Digital Converter | Converts the sensor's analog acceleration signal into digital values |
 | AF | Alternate Function | Connects a GPIO pin to a peripheral such as USART instead of using it as ordinary GPIO |
 | AHB | Advanced High-performance Bus | High-speed internal bus in the STM32 clock/bus architecture |
+| Aliasing | Frequency ambiguity caused by insufficient sampling rate | Frequencies above Nyquist can appear as lower frequencies in sampled data. |
 | APB | Advanced Peripheral Bus | Bus connecting many STM32 peripherals; TIM2 is on APB1 |
 | ARR | Auto-Reload Register | Timer value defining when the counter resets and generates an update event |
+| Bin | Discrete frequency position in a DFT/FFT result | Bin `k` corresponds to `k × Fs / N`. |
 | BSRR | Bit Set/Reset Register | GPIO register used to atomically set or reset output pins |
 | CMSIS | Cortex Microcontroller Software Interface Standard | ARM software interface used underneath STM32 libraries |
 | CPHA | Clock Phase | Defines on which SPI clock edge data is sampled |
@@ -14,10 +16,12 @@
 | CRC | Cyclic Redundancy Check | Error-detection mechanism based on a calculated check value |
 | CS | Chip Select | Signal used to select an SPI peripheral, usually active LOW |
 | CYCCNT | Cycle Counter | DWT 32-bit register counting CPU clock cycles, used to profile `ProcessBuffer()`. |
+| DFT | Discrete Fourier Transform | Converts a finite sequence of samples from the time domain to discrete frequency components. |
 | DMA | Direct Memory Access | Hardware peripheral that transfers data between peripherals and memory with minimal CPU involvement |
 | DRDY | Data Ready | Sensor signal indicating that a new measurement is available; used here to trigger an STM32 external interrupt |
 | DWT | Data Watchpoint and Trace | Cortex-M4 debug/trace unit used here to measure CPU execution cycles. |
 | EXTI | External Interrupt/Event Controller | STM32 block used to generate interrupts/events from external lines |
+| FFT | Fast Fourier Transform | Efficient algorithm used to compute the DFT. |
 | FIFO | First In, First Out | Buffer where the oldest stored data is read first |
 | Fs | Sampling Frequency | Number of samples acquired per second |
 | GPIO | General-Purpose Input/Output | Configurable digital input/output pins |
@@ -38,6 +42,7 @@
 | MSP | MCU Support Package | HAL layer containing low-level peripheral hardware initialization |
 | NSS | Slave Select | STM32 name for the SPI peripheral-selection signal |
 | NVIC | Nested Vectored Interrupt Controller | Cortex-M hardware block managing interrupts and priorities |
+| Nyquist frequency | Half the sampling frequency | Highest frequency representable without aliasing, equal to `Fs / 2`. |
 | ODR | Output Data Rate | Rate at which a digital sensor produces new samples |
 | ODR | Output Data Register | GPIO register representing output states |
 | OSPEEDR | Output Speed Register | GPIO register controlling output switching speed |

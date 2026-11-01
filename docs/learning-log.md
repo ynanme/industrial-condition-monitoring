@@ -340,3 +340,27 @@
 - Observed peak-to-peak saturation near 4.096 g while using the ADXL355 ±2.048 g range.
 - Measured `ProcessBuffer()` at approximately 1.5 ms after adding mean, standard deviation and peak-to-peak processing, versus an acquisition-buffer period of roughly 258 ms.
 - Next step: introduce frequency-domain information from first principles before implementing FFT-based features.
+
+## Session 30 — Sampling, aliasing and FFT foundations
+
+- Connected the 2 kHz ADXL355 sampling rate to frequency analysis.
+- Introduced the sampling frequency `Fs` and the relationship between signal frequency and samples per period:
+  - `samples_per_period = Fs / f`.
+- Introduced the Nyquist limit:
+  - a signal sampled at `Fs` can only be represented without ambiguity up to `Fs / 2`;
+  - for the current `Fs ≈ 2000 Hz`, the Nyquist frequency is approximately 1000 Hz.
+- Explored aliasing with visual examples:
+  - frequencies above Nyquist can produce exactly the same sampled values as lower frequencies;
+  - therefore the original high-frequency signal cannot be uniquely recovered from the samples.
+- Related this to the current ADXL355 configuration:
+  - nominal ODR ≈ 2000 Hz;
+  - configured low-pass filter ≈ 500 Hz;
+  - useful vibration band is therefore comfortably below Nyquist.
+- Introduced the FFT as a fast algorithm for computing the DFT and converting a time-domain buffer into frequency-domain information.
+- Introduced FFT bins as discrete measurable frequency positions.
+- For `Fs = 2000 Hz` and `N = 512`, established:
+  - frequency resolution `Δf = Fs / N ≈ 3.906 Hz`;
+  - bin `k` corresponds to `f_k = k × Fs / N`;
+  - the useful real-signal spectrum extends from bin 0 to bin `N/2`.
+- Noted that very low frequencies may not align with an FFT bin and may not complete even one cycle inside a 512-sample window.
+- Identified the next topic: how FFT magnitude is distributed across bins when a signal frequency does not fall exactly on one bin.
