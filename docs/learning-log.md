@@ -364,3 +364,22 @@
   - the useful real-signal spectrum extends from bin 0 to bin `N/2`.
 - Noted that very low frequencies may not align with an FFT bin and may not complete even one cycle inside a 512-sample window.
 - Identified the next topic: how FFT magnitude is distributed across bins when a signal frequency does not fall exactly on one bin.
+
+## Session 31 — FFT magnitude, spectral leakage and windowing
+
+- Clarified why an FFT bin contains magnitude and phase information.
+- Introduced the complex FFT output and magnitude calculation.
+- Explained why a frequency aligned with an FFT bin can concentrate its energy in that bin.
+- Introduced spectral leakage for frequencies that do not complete an integer number of periods inside the buffer.
+- Introduced the Hann window as a way to reduce leakage at the cost of a wider main spectral peak.
+- Clarified that windowing intentionally modifies the signal and requires amplitude correction when physical amplitudes are needed.
+
+
+## Session 32 — FFT preprocessing
+
+- Introduced removal of the buffer mean before vibration FFT processing.
+- Clarified that subtracting the mean removes only the DC component, not the signal variations.
+- Defined the preprocessing chain: centering → Hann window → FFT → magnitude spectrum.
+- Introduced the Hann coefficient formula for a 512-sample buffer.
+- Implemented a precomputed `hann_window[]` using `cosf()`.
+- Added one-time Hann-window initialization during application startup.

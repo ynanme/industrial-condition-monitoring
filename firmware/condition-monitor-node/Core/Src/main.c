@@ -62,6 +62,8 @@ typedef struct
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define PI_F 3.14159265358979323846f
+
 #define ADXL355_SENSITIVITY_LSB_PER_G 256000.0f
 
 /* USER CODE END PD */
@@ -94,6 +96,8 @@ static volatile uint32_t drdy_events = 0;
 static volatile uint32_t dma_start_fail_count = 0;
 static volatile uint32_t spi_error_count = 0;
 
+static float hann_window[ADXL355_BUFFER_SIZE];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,6 +113,15 @@ static void MX_SPI2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
+static void InitHannWindow(void)
+{
+	for (int i = 0; i < ADXL355_BUFFER_SIZE; i++)
+	{
+		hann_window[i] = 0.5f * (1.0f - cos(2 * PI_F * i / (ADXL355_BUFFER_SIZE - 1)));
+	}
+}
 
 
 static void ProcessBuffer(const ADXL355_Buffer *buffer, ADXL355_Features *features)
@@ -220,6 +233,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   HAL_TIM_Base_Start_IT(&htim2);
+
+
+  InitHannWindow();
 
 
   char message[] = "Hello from STM32!\r\n";
