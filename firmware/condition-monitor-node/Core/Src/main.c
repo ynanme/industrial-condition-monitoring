@@ -98,6 +98,8 @@ static volatile uint32_t spi_error_count = 0;
 
 static float hann_window[ADXL355_BUFFER_SIZE];
 
+static float fft_input[ADXL355_BUFFER_SIZE];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,6 +122,15 @@ static void InitHannWindow(void)
 	for (int i = 0; i < ADXL355_BUFFER_SIZE; i++)
 	{
 		hann_window[i] = 0.5f * (1.0f - cos(2 * PI_F * i / (ADXL355_BUFFER_SIZE - 1)));
+	}
+}
+
+
+static void PrepareFFTInput(const ADXL355_Buffer *buffer, const ADXL355_Features *features)
+{
+	for (int i = 0; i < ADXL355_BUFFER_SIZE; i++)
+	{
+		fft_input[i] = (buffer->x[i] / ADXL355_SENSITIVITY_LSB_PER_G - features->mean_x_g) * hann_window[i];
 	}
 }
 

@@ -383,3 +383,11 @@
 - Introduced the Hann coefficient formula for a 512-sample buffer.
 - Implemented a precomputed `hann_window[]` using `cosf()`.
 - Added one-time Hann-window initialization during application startup.
+
+## Session 33 — FFT input and CMSIS-DSP integration
+
+- Added a dedicated `fft_input[]` buffer for per-buffer frequency analysis.
+- Implemented preprocessing of the X axis: conversion to g, mean removal and Hann windowing.
+- Introduced CMSIS-DSP and `arm_rfft_fast_instance_f32`.
+- Clarified the relationship between STM32, the ARM Cortex-M4 core, STM32 HAL and CMSIS-DSP.
+- Integrated CMSIS-DSP headers and source files into the project.
