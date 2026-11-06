@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "arm_math.h"
+
 #include "adxl355.h"
 
 /* USER CODE END Includes */
@@ -64,6 +66,7 @@ typedef struct
 
 #define PI_F 3.14159265358979323846f
 
+#define ADXL355_SAMPLE_RATE_HZ 2000.0f
 #define ADXL355_SENSITIVITY_LSB_PER_G 256000.0f
 
 /* USER CODE END PD */
@@ -98,7 +101,11 @@ static volatile uint32_t spi_error_count = 0;
 
 static float hann_window[ADXL355_BUFFER_SIZE];
 
+static arm_rfft_fast_instance_f32 fft_instance;
+
+static float fft_output[ADXL355_BUFFER_SIZE];
 static float fft_input[ADXL355_BUFFER_SIZE];
+static float fft_magnitude[ADXL355_BUFFER_SIZE / 2 + 1];
 
 /* USER CODE END PV */
 
@@ -132,6 +139,38 @@ static void PrepareFFTInput(const ADXL355_Buffer *buffer, const ADXL355_Features
 	{
 		fft_input[i] = (buffer->x[i] / ADXL355_SENSITIVITY_LSB_PER_G - features->mean_x_g) * hann_window[i];
 	}
+}
+
+
+static void ComputeMagnitudeSpectrum(void)
+{
+	fft_magnitude[0] = fabsf(fft_output[0]);
+
+	for (int k = 1; k < ADXL355_BUFFER_SIZE / 2; k++)
+	{
+		float re = fft_output[2 * k];
+		float im = fft_output[2 * k + 1];
+
+		fft_magnitude[k] = sqrtf(re * re + im * im);
+	}
+
+	fft_magnitude[ADXL355_BUFFER_SIZE / 2] = fabsf(fft_output[1]);
+}
+
+
+static uint16_t FindDominantBin(void)
+{
+    uint16_t dominant_bin = 1;
+
+    for (uint16_t i = 2; i < ADXL355_BUFFER_SIZE / 2; i++)
+    {
+    	if (fft_magnitude[i] > fft_magnitude[dominant_bin])
+    	{
+    		dominant_bin = i;
+    	}
+    }
+
+    return dominant_bin;
 }
 
 
@@ -248,6 +287,14 @@ int main(void)
 
   InitHannWindow();
 
+  arm_status fft_status =
+      arm_rfft_fast_init_f32(&fft_instance, ADXL355_BUFFER_SIZE);
+
+  if (fft_status != ARM_MATH_SUCCESS)
+  {
+      Error_Handler();
+  }
+
 
   char message[] = "Hello from STM32!\r\n";
 
@@ -285,24 +332,33 @@ int main(void)
 	  if (buffer_to_process != NULL) {
 
 
-		  char msg[64];
+		  char msg[128];
 		  int len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 
 		  ADXL355_Features features;
 		  uint32_t start = HAL_GetTick();
 		  uint32_t start_cycles = DWT->CYCCNT;
+
 		  ProcessBuffer(buffer_to_process, &features);
+		  PrepareFFTInput(buffer_to_process, &features);
+		  arm_rfft_fast_f32(&fft_instance, fft_input, fft_output, 0);
+		  ComputeMagnitudeSpectrum();
+		  uint16_t dominant_bin = FindDominantBin();
+		  float dominant_frequency_hz = dominant_bin * ADXL355_SAMPLE_RATE_HZ / ADXL355_BUFFER_SIZE;
+		  float dominant_magnitude = fft_magnitude[dominant_bin];
+
 		  uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
 		  uint32_t processing_time_ms = HAL_GetTick() - start;
 		  float processing_time_us = (float)processing_cycles / (SystemCoreClock / 1000000.0f);
-		  len = snprintf(msg, sizeof(msg), "X: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_x_g, features.std_x_g, features.p2p_x_g);
+		  processed_buffer_count++;
+
+		  len = snprintf(msg, sizeof(msg), "X: mean=%fg, std=%fg, p2p=%fg, f=%fHz, magnitude=%f\r\n", features.mean_x_g, features.std_x_g, features.p2p_x_g, dominant_frequency_hz, dominant_magnitude);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Y: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_y_g, features.std_y_g, features.p2p_y_g);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Z: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_z_g, features.std_z_g, features.p2p_z_g);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-		  processed_buffer_count++;
 		  len = snprintf(msg, sizeof(msg), "Buffer at %p done being processed.\r\n", (void *)buffer_to_process);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 

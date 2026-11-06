@@ -391,3 +391,14 @@
 - Introduced CMSIS-DSP and `arm_rfft_fast_instance_f32`.
 - Clarified the relationship between STM32, the ARM Cortex-M4 core, STM32 HAL and CMSIS-DSP.
 - Integrated CMSIS-DSP headers and source files into the project.
+
+## Session 34 — First real FFT on STM32
+
+- Integrated a minimal CMSIS-DSP build for the Cortex-M4 instead of compiling the complete library.
+- Resolved the required RFFT/CFFT source and table dependencies.
+- Executed the first real FFT on the windowed X-axis ADXL355 data.
+- Added magnitude-spectrum computation, including the special DC and Nyquist bins.
+- Implemented dominant-bin detection and converted the bin index to frequency using `f = k × Fs / N`.
+- Observed real dominant-frequency results while maintaining continuous acquisition with no buffer drops.
+- Identified that raw FFT magnitudes are not yet physical amplitudes in g and that a stationary sensor still produces varying dominant bins due to its non-zero spectrum.
+- Next step: inspect/normalize the spectrum and determine how to distinguish meaningful vibration peaks from the noise floor.
