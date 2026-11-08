@@ -402,3 +402,13 @@
 - Observed real dominant-frequency results while maintaining continuous acquisition with no buffer drops.
 - Identified that raw FFT magnitudes are not yet physical amplitudes in g and that a stationary sensor still produces varying dominant bins due to its non-zero spectrum.
 - Next step: inspect/normalize the spectrum and determine how to distinguish meaningful vibration peaks from the noise floor.
+
+## Session 35 — FFT magnitude normalization and noise-floor estimation
+
+- Normalized FFT magnitudes into approximate physical amplitudes in `g`.
+- Computed the actual coherent gain of the 512-point Hann window.
+- Added amplitude correction for ordinary FFT bins while handling DC and Nyquist separately.
+- Introduced the spectral noise floor and used the median rather than the mean or minimum.
+- Restricted noise-floor estimation to the useful 0–500 Hz band.
+- Observed stationary peak/noise ratios typically around a few units, with occasional large outliers.
+- Next step: investigate high-ratio outliers before defining any vibration-detection threshold.

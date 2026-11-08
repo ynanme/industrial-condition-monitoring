@@ -69,6 +69,8 @@ typedef struct
 #define ADXL355_SAMPLE_RATE_HZ 2000.0f
 #define ADXL355_SENSITIVITY_LSB_PER_G 256000.0f
 
+#define FFT_MAX_ANALYSIS_BIN 128
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -106,6 +108,9 @@ static arm_rfft_fast_instance_f32 fft_instance;
 static float fft_output[ADXL355_BUFFER_SIZE];
 static float fft_input[ADXL355_BUFFER_SIZE];
 static float fft_magnitude[ADXL355_BUFFER_SIZE / 2 + 1];
+static float noise_work[FFT_MAX_ANALYSIS_BIN];
+
+static float hann_coherent_gain;
 
 /* USER CODE END PV */
 
@@ -126,10 +131,13 @@ static void MX_SPI2_Init(void);
 
 static void InitHannWindow(void)
 {
+	hann_coherent_gain = 0.0f;
 	for (int i = 0; i < ADXL355_BUFFER_SIZE; i++)
 	{
-		hann_window[i] = 0.5f * (1.0f - cos(2 * PI_F * i / (ADXL355_BUFFER_SIZE - 1)));
+		hann_window[i] = 0.5f * (1.0f - cosf(2 * PI_F * i / (ADXL355_BUFFER_SIZE - 1)));
+		hann_coherent_gain += hann_window[i];
 	}
+	hann_coherent_gain /= ADXL355_BUFFER_SIZE;
 }
 
 
@@ -144,17 +152,20 @@ static void PrepareFFTInput(const ADXL355_Buffer *buffer, const ADXL355_Features
 
 static void ComputeMagnitudeSpectrum(void)
 {
-	fft_magnitude[0] = fabsf(fft_output[0]);
+	float scale = ADXL355_BUFFER_SIZE * hann_coherent_gain;
+
+	fft_magnitude[0] = fabsf(fft_output[0]) / scale;
 
 	for (int k = 1; k < ADXL355_BUFFER_SIZE / 2; k++)
 	{
 		float re = fft_output[2 * k];
 		float im = fft_output[2 * k + 1];
+		float raw_magnitude = sqrtf(re * re + im * im);
 
-		fft_magnitude[k] = sqrtf(re * re + im * im);
+		fft_magnitude[k] = 2.0f * raw_magnitude / scale;
 	}
 
-	fft_magnitude[ADXL355_BUFFER_SIZE / 2] = fabsf(fft_output[1]);
+	fft_magnitude[ADXL355_BUFFER_SIZE / 2] = fabsf(fft_output[1]) / scale;
 }
 
 
@@ -171,6 +182,33 @@ static uint16_t FindDominantBin(void)
     }
 
     return dominant_bin;
+}
+
+
+static float ComputeNoiseFloor(void)
+{
+    int n = FFT_MAX_ANALYSIS_BIN;
+
+    for (int i = 0; i < n; i++)
+    {
+        noise_work[i] = fft_magnitude[i + 1];
+    }
+
+    for (int i = 1; i < n; i++)
+    {
+        float key = noise_work[i];
+        int j = i - 1;
+
+        while (j >= 0 && noise_work[j] > key)
+        {
+            noise_work[j + 1] = noise_work[j];
+            j--;
+        }
+
+        noise_work[j + 1] = key;
+    }
+
+    return (noise_work[n / 2 - 1] + noise_work[n / 2]) / 2.0f;
 }
 
 
@@ -318,6 +356,11 @@ int main(void)
 
   uint32_t processed_buffer_count = 0;
 
+  static uint16_t ratio_count = 0;
+  static float ratio_sum = 0.0f;
+  static float ratio_min = 0.0f;
+  static float ratio_max = 0.0f;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -333,12 +376,13 @@ int main(void)
 
 
 		  char msg[128];
-		  int len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  int len;
+		  /*len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
 
 		  ADXL355_Features features;
-		  uint32_t start = HAL_GetTick();
-		  uint32_t start_cycles = DWT->CYCCNT;
+		  /*uint32_t start = HAL_GetTick();
+		  uint32_t start_cycles = DWT->CYCCNT;*/
 
 		  ProcessBuffer(buffer_to_process, &features);
 		  PrepareFFTInput(buffer_to_process, &features);
@@ -347,13 +391,31 @@ int main(void)
 		  uint16_t dominant_bin = FindDominantBin();
 		  float dominant_frequency_hz = dominant_bin * ADXL355_SAMPLE_RATE_HZ / ADXL355_BUFFER_SIZE;
 		  float dominant_magnitude = fft_magnitude[dominant_bin];
+		  float noise_floor = ComputeNoiseFloor();
+		  float peak_ratio = fft_magnitude[dominant_bin] / noise_floor;
 
-		  uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
+		  if (ratio_count == 0)
+		  {
+			  len = snprintf(msg, sizeof(msg), "min=%f, max=%f, sum=%f\r\n", ratio_min, ratio_max, ratio_sum);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+			  ratio_min = peak_ratio;
+			  ratio_max = peak_ratio;
+			  ratio_sum = peak_ratio;
+		  } else
+		  {
+			  if (peak_ratio < ratio_min) ratio_min = peak_ratio;
+			  if (peak_ratio > ratio_max) ratio_max = peak_ratio;
+			  ratio_sum += peak_ratio;
+		  }
+
+		  ratio_count = (ratio_count + 1) % 100;
+
+		  /*uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
 		  uint32_t processing_time_ms = HAL_GetTick() - start;
 		  float processing_time_us = (float)processing_cycles / (SystemCoreClock / 1000000.0f);
 		  processed_buffer_count++;
 
-		  len = snprintf(msg, sizeof(msg), "X: mean=%fg, std=%fg, p2p=%fg, f=%fHz, magnitude=%f\r\n", features.mean_x_g, features.std_x_g, features.p2p_x_g, dominant_frequency_hz, dominant_magnitude);
+		  len = snprintf(msg, sizeof(msg), "X: mean=%fg, std=%fg, p2p=%fg, f=%fHz, magnitude=%f, ratio=%f\r\n", features.mean_x_g, features.std_x_g, features.p2p_x_g, dominant_frequency_hz, dominant_magnitude, peak_ratio);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Y: mean=%fg, std=%fg, p2p=%fg\r\n", features.mean_y_g, features.std_y_g, features.p2p_y_g);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
@@ -369,14 +431,14 @@ int main(void)
 		  len = snprintf(msg, sizeof(msg), "DMA start fail count: %lu.\r\n", dma_start_fail_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "SPI errors count: %lu.\r\n", spi_error_count);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
 
 		  ready_buffer = NULL;
 
-		  len = snprintf(msg, sizeof(msg), "Processing time ms: %lu.\r\n", processing_time_ms);
+		  /*len = snprintf(msg, sizeof(msg), "Processing time ms: %lu.\r\n", processing_time_ms);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Processing: %lu cycles, %.2f us\r\n\n", (unsigned long)processing_cycles, processing_time_us);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
 	  }
 
   }
