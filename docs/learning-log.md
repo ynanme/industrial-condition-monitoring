@@ -412,3 +412,20 @@
 - Restricted noise-floor estimation to the useful 0–500 Hz band.
 - Observed stationary peak/noise ratios typically around a few units, with occasional large outliers.
 - Next step: investigate high-ratio outliers before defining any vibration-detection threshold.
+
+## Session 36 — Investigating FFT peak-ratio outliers
+
+- Investigated unexpectedly large peak-to-noise ratios while the ADXL355 was stationary.
+- Identified an inconsistency: dominant peaks were searched over 0–1000 Hz while the noise floor was estimated only over the 0–500 Hz useful band.
+- Restricted dominant-bin detection to bins `1..128`, matching the current 0–500 Hz analysis band.
+- Observed persistent high-ratio events mainly around bin 3 (`≈11.72 Hz`), with occasional peaks around `≈47–51 Hz`.
+- Inspected bins `1..8` during high-ratio events and observed a repeatable peak centered around bin 3 with elevated neighboring bins.
+- Identified the next diagnostics: inject a zero FFT input to validate the processing pipeline, then compare the sensor directly on the table versus mechanically isolated.
+
+## Session 37 — Frequency-band assumptions and FFT documentation
+
+- Reconstructed the FFT analysis path from first principles after the previous investigation became difficult to follow.
+- Distinguished the 1000 Hz Nyquist limit from the current 500 Hz application analysis band.
+- Clarified that the 0–500 Hz band is an initial design assumption based on the current ADXL355 ODR/LPF configuration, not a guaranteed property of the monitored machine.
+- Defined how this assumption can later be validated by comparing measurements with a wider sensor bandwidth.
+- Reviewed the purpose of the peak-to-noise ratio and the earlier mismatch between peak-search and noise-floor frequency bands.

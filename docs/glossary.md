@@ -11,11 +11,14 @@
 | Bin | Discrete frequency position in a DFT/FFT result | Bin `k` corresponds to `k × Fs / N`. |
 | BSRR | Bit Set/Reset Register | GPIO register used to atomically set or reset output pins |
 | CMSIS | Cortex Microcontroller Software Interface Standard | ARM software interface used underneath STM32 libraries |
+| CMSIS-DSP | CMSIS Digital Signal Processing library | ARM library used here for the 512-point real FFT and other signal-processing operations |
+| Coherent gain | Average amplitude gain of a window function | Used to compensate for the amplitude attenuation introduced by the Hann window |
 | CPHA | Clock Phase | Defines on which SPI clock edge data is sampled |
 | CPOL | Clock Polarity | Defines the idle level of the SPI clock |
 | CRC | Cyclic Redundancy Check | Error-detection mechanism based on a calculated check value |
 | CS | Chip Select | Signal used to select an SPI peripheral, usually active LOW |
 | CYCCNT | Cycle Counter | DWT 32-bit register counting CPU clock cycles, used to profile `ProcessBuffer()`. |
+| DC | Direct Current / zero-frequency component | FFT bin 0; represents the mean value of the analyzed buffer |
 | DFT | Discrete Fourier Transform | Converts a finite sequence of samples from the time domain to discrete frequency components. |
 | DMA | Direct Memory Access | Hardware peripheral that transfers data between peripherals and memory with minimal CPU involvement |
 | DRDY | Data Ready | Sensor signal indicating that a new measurement is available; used here to trigger an STM32 external interrupt |
@@ -26,6 +29,7 @@
 | Fs | Sampling Frequency | Number of samples acquired per second |
 | GPIO | General-Purpose Input/Output | Configurable digital input/output pins |
 | HAL | Hardware Abstraction Layer | ST library providing higher-level access to STM32 hardware |
+| Hann window | Window function that tapers signal values toward zero at both ends | Applied before the FFT to reduce spectral leakage |
 | HPF | High-Pass Filter | Filter attenuating lower frequencies while passing higher-frequency content |
 | I²C | Inter-Integrated Circuit | Synchronous serial bus using shared clock and data lines |
 | IDE | Integrated Development Environment | Software used to edit, build, flash and debug code; here STM32CubeIDE |
@@ -33,6 +37,7 @@
 | ISR | Interrupt Service Routine | Function executed in response to an interrupt |
 | LPF | Low-Pass Filter | Filter passing low frequencies while attenuating higher ones |
 | LSB | Least Significant Bit | Smallest numerical step of a digital value; ADXL355 sensitivity is expressed in LSB/g |
+| Magnitude | Size of a complex FFT coefficient | Computed from its real and imaginary parts and used to measure the strength of a frequency component |
 | MCU | Microcontroller Unit | The microcontroller chip itself; here STM32F401RET6 |
 | MEMS | Micro-Electro-Mechanical System | Technology combining microscopic mechanical structures and electronics |
 | MISO | Master In, Slave Out | SPI data line from peripheral to controller |
@@ -40,6 +45,7 @@
 | MOSI | Master Out, Slave In | SPI data line from controller to peripheral |
 | MSB | Most Significant Bit | Bit with the highest numerical weight in a binary value |
 | MSP | MCU Support Package | HAL layer containing low-level peripheral hardware initialization |
+| Noise floor | Typical background level of a spectrum | Currently estimated using the median magnitude inside the analyzed frequency band |
 | NSS | Slave Select | STM32 name for the SPI peripheral-selection signal |
 | NVIC | Nested Vectored Interrupt Controller | Cortex-M hardware block managing interrupts and priorities |
 | Nyquist frequency | Half the sampling frequency | Highest frequency representable without aliasing, equal to `Fs / 2`. |
@@ -48,9 +54,11 @@
 | OSPEEDR | Output Speed Register | GPIO register controlling output switching speed |
 | OTYPER | Output Type Register | GPIO register selecting push-pull or open-drain output |
 | P2P | Peak-to-Peak | Difference between the maximum and minimum values of a signal over a window. |
+| Phase | Position of a sinusoidal component within its oscillation cycle | Encoded together with magnitude in the complex FFT result |
 | PSC | Prescaler | Timer divider used to reduce the timer input clock |
 | PUPDR | Pull-Up/Pull-Down Register | GPIO register controlling internal pull resistors |
 | RCC | Reset and Clock Control | STM32 block responsible for peripheral clocks and resets |
+| RFFT | Real Fast Fourier Transform | FFT optimized for real-valued input signals such as accelerometer samples |
 | RMS | Root Mean Square | Measure of the overall magnitude of a signal. RMS of a mean-centered signal corresponds to its standard deviation. |
 | RPM | Revolutions Per Minute | Number of complete rotations per minute |
 | RX | Receive | Serial data reception |
@@ -58,6 +66,7 @@
 | SCL | Serial Clock | Clock line used by the I²C bus |
 | SDA | Serial Data | Bidirectional data line used by the I²C bus |
 | SoA | Structure of Arrays | Data layout where each field is stored in its own array; used here for separate X, Y and Z acquisition buffers |
+| Spectral leakage | Spreading of signal energy across multiple FFT bins | Occurs when the observed signal does not align perfectly with the finite FFT window |
 | SPI | Serial Peripheral Interface | Synchronous serial communication interface using SCK, MOSI, MISO and CS |
 | SRAM | Static Random-Access Memory | Volatile working memory used by the MCU for variables, stack, static buffers and other runtime data |
 | Standard deviation (std) | Standard deviation | Measures how much signal samples vary around their mean; used here as a vibration-level feature. |
