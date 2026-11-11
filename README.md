@@ -9,7 +9,10 @@ Embedded Linux edge gateway and cloud-based monitoring.
 ## Hardware
 
 - STM32 NUCLEO-F401RE
+- Analog Devices EVAL-ADXL355-PMDZ 3-axis accelerometer
 
 ## Status
 
-Work in progress — started in September 2026.
+- **V0 — STM32 foundations:** completed
+- **V1 — ADXL355 sensor acquisition:** completed
+- **V2 — Real-time acquisition and signal processing:** in progress
