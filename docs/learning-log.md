@@ -429,3 +429,21 @@
 - Clarified that the 0–500 Hz band is an initial design assumption based on the current ADXL355 ODR/LPF configuration, not a guaranteed property of the monitored machine.
 - Defined how this assumption can later be validated by comparing measurements with a wider sensor bandwidth.
 - Reviewed the purpose of the peak-to-noise ratio and the earlier mismatch between peak-search and noise-floor frequency bands.
+
+## Session 38 — Investigating unexpected FFT peaks
+
+- Performed a zero-input FFT test by replacing all 512 FFT input samples with zero and confirmed that all tested FFT magnitudes remained zero, ruling out the FFT/magnitude pipeline as the source of the observed spectral peaks.
+- Restored real ADXL355 samples and compared stationary measurements on the table and on a fabric surface.
+- Improved debug logging to record peak ratio, dominant frequency, peak magnitude, noise floor and X-axis standard deviation.
+- Confirmed that high-ratio events are not restricted to the previously observed 11.72 Hz bin.
+- Observed recurring dominant components mainly in the low-frequency region, particularly around 15–31 Hz, with occasional higher-frequency events.
+- Started recording longer UART runs directly to a file with picocom for more reliable offline analysis.
+- Next session: analyze the 5-minute log globally before continuing the investigation.
+
+## Session 39 — Closing the FFT investigation
+
+- Analyzed the long stationary ADXL355 capture and confirmed that high FFT peak/noise ratios were not caused by an unstable noise floor.
+- Inspected raw time-domain samples and found no obvious SPI, DMA, buffering or decoding corruption.
+- Recomputed the FFT offline and confirmed that the observed spectral peaks were already present in the acquired signal.
+- Closed the FFT outlier investigation: no software-processing bug was identified.
+- Removed the temporary diagnostics and restored the clean V2 processing path, with continuous acquisition running without errors or dropped buffers.

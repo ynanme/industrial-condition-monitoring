@@ -347,6 +347,7 @@ int main(void)
   } else {
 	  char msg[] = "ADXL355 initialization failed.\r\n";
 	  HAL_UART_Transmit(&huart2, (uint8_t *)msg, sizeof(msg) - 1, HAL_MAX_DELAY);
+	  Error_Handler();
   }
 
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
@@ -356,10 +357,6 @@ int main(void)
 
   uint32_t processed_buffer_count = 0;
 
-  static uint16_t ratio_count = 0;
-  static float ratio_sum = 0.0f;
-  static float ratio_min = 0.0f;
-  static float ratio_max = 0.0f;
 
   /* USER CODE END 2 */
 
@@ -377,12 +374,12 @@ int main(void)
 
 		  char msg[128];
 		  int len;
-		  /*len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
+		  len = snprintf(msg, sizeof(msg), "New buffer at %p being processed...\r\n", (void *)buffer_to_process);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 
 		  ADXL355_Features features;
-		  /*uint32_t start = HAL_GetTick();
-		  uint32_t start_cycles = DWT->CYCCNT;*/
+		  uint32_t start = HAL_GetTick();
+		  uint32_t start_cycles = DWT->CYCCNT;
 
 		  ProcessBuffer(buffer_to_process, &features);
 		  PrepareFFTInput(buffer_to_process, &features);
@@ -394,23 +391,7 @@ int main(void)
 		  float noise_floor = ComputeNoiseFloor();
 		  float peak_ratio = fft_magnitude[dominant_bin] / noise_floor;
 
-		  if (ratio_count == 0)
-		  {
-			  len = snprintf(msg, sizeof(msg), "min=%f, max=%f, sum=%f\r\n", ratio_min, ratio_max, ratio_sum);
-			  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
-			  ratio_min = peak_ratio;
-			  ratio_max = peak_ratio;
-			  ratio_sum = peak_ratio;
-		  } else
-		  {
-			  if (peak_ratio < ratio_min) ratio_min = peak_ratio;
-			  if (peak_ratio > ratio_max) ratio_max = peak_ratio;
-			  ratio_sum += peak_ratio;
-		  }
-
-		  ratio_count = (ratio_count + 1) % 100;
-
-		  /*uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
+		  uint32_t processing_cycles = DWT->CYCCNT - start_cycles;
 		  uint32_t processing_time_ms = HAL_GetTick() - start;
 		  float processing_time_us = (float)processing_cycles / (SystemCoreClock / 1000000.0f);
 		  processed_buffer_count++;
@@ -431,14 +412,14 @@ int main(void)
 		  len = snprintf(msg, sizeof(msg), "DMA start fail count: %lu.\r\n", dma_start_fail_count);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "SPI errors count: %lu.\r\n", spi_error_count);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 
 		  ready_buffer = NULL;
 
-		  /*len = snprintf(msg, sizeof(msg), "Processing time ms: %lu.\r\n", processing_time_ms);
+		  len = snprintf(msg, sizeof(msg), "Processing time ms: %lu.\r\n", processing_time_ms);
 		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 		  len = snprintf(msg, sizeof(msg), "Processing: %lu cycles, %.2f us\r\n\n", (unsigned long)processing_cycles, processing_time_us);
-		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);*/
+		  HAL_UART_Transmit(&huart2, (uint8_t *)msg, len, HAL_MAX_DELAY);
 	  }
 
   }
